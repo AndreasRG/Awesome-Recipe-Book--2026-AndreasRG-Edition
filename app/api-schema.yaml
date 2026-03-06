@@ -49,14 +49,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserRequest'
+              $ref: '#/components/schemas/UserCreate'
         required: true
       responses:
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserResponse'
           description: ''
 
   /api/user/me/:
@@ -70,7 +70,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserResponse'
           description: ''
     put:
       operationId: user_me_update
@@ -81,14 +81,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserRequest'
+              $ref: '#/components/schemas/UserUpdate'
         required: true
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserResponse'
           description: ''
     patch:
       operationId: user_me_partial_update
@@ -99,13 +99,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedUserRequest'
+              $ref: '#/components/schemas/PatchedUserUpdate'
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserResponse'
           description: ''
 
   /api/user/token/:
@@ -118,31 +118,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthTokenRequest'
+              $ref: '#/components/schemas/TokenCreate'
         required: true
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthToken'
+                $ref: '#/components/schemas/TokenResponse'
           description: ''
 
   /api/recipe/recipes/:
     get:
       operationId: recipe_recipes_list
       description: View for manage recipe APIs.
-      parameters:
-      - in: query
-        name: ingredients
-        schema:
-          type: string
-        description: Comma separated list of ingredient IDs to filter
-      - in: query
-        name: tags
-        schema:
-          type: string
-        description: Comma separated list of tag IDs to filter
       tags:
       - recipe
       responses:
@@ -152,7 +141,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Recipe'
+                  $ref: '#/components/schemas/RecipeResponse'
           description: ''
     post:
       operationId: recipe_recipes_create
@@ -163,14 +152,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RecipeDetailRequest'
+              $ref: '#/components/schemas/RecipeCreate'
         required: true
       responses:
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RecipeDetail'
+                type: object
+                properties:
+                  id:
+                    type: integer
           description: ''
 
   /api/recipe/recipes/{id}/:
@@ -188,218 +180,11 @@ paths:
       - recipe
       responses:
         '200':
+          description: ''
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RecipeDetail'
-          description: ''
-    put:
-      operationId: recipe_recipes_update
-      description: View for manage recipe APIs.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this recipe.
-        required: true
-      tags:
-      - recipe
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RecipeDetailRequest'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecipeDetail'
-          description: ''
-    patch:
-      operationId: recipe_recipes_partial_update
-      description: View for manage recipe APIs.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this recipe.
-        required: true
-      tags:
-      - recipe
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedRecipeDetailRequest'
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecipeDetail'
-          description: ''
-    delete:
-      operationId: recipe_recipes_destroy
-      description: View for manage recipe APIs.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this recipe.
-        required: true
-      tags:
-      - recipe
-      responses:
-        '204':
-          description: No response body
-
-  /api/recipe/recipes/{id}/upload-image/:
-    post:
-      operationId: recipe_recipes_upload_image_create
-      description: Upload an image to recipe.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this recipe.
-        required: true
-      tags:
-      - recipe
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RecipeImageRequest'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecipeImage'
-          description: ''
-
-  /api/recipe/ingredients/:
-    get:
-      operationId: recipe_ingredients_list
-      description: Manage ingredients in the database.
-      parameters:
-      - in: query
-        name: assigned_only
-        schema:
-          type: integer
-          enum:
-          - 0
-          - 1
-        description: Filter by items assigned to recipes.
-      tags:
-      - recipe
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Ingredient'
-          description: ''
-
-  /api/recipe/ingredients/{id}/:
-    put:
-      operationId: recipe_ingredients_update
-      description: Manage ingredients in the database.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this ingredient.
-        required: true
-      tags:
-      - recipe
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/IngredientRequest'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Ingredient'
-          description: ''
-    patch:
-      operationId: recipe_ingredients_partial_update
-      description: Manage ingredients in the database.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this ingredient.
-        required: true
-      tags:
-      - recipe
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedIngredientRequest'
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Ingredient'
-          description: ''
-    delete:
-      operationId: recipe_ingredients_destroy
-      description: Manage ingredients in the database.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this ingredient.
-        required: true
-      tags:
-      - recipe
-      responses:
-        '204':
-          description: No response body
-
-  /api/recipe/tags/:
-    get:
-      operationId: recipe_tags_list
-      description: Manage tags in the database.
-      parameters:
-      - in: query
-        name: assigned_only
-        schema:
-          type: integer
-          enum:
-          - 0
-          - 1
-        description: Filter by items assigned to recipes.
-      tags:
-      - recipe
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Tag'
-          description: ''
+                $ref: '#/components/schemas/RecipeResponse'
 
   /api/recipe/tags/{id}/:
     put:
@@ -425,7 +210,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tag'
+                $ref: '#/components/schemas/TagResponse'
           description: ''
     patch:
       operationId: recipe_tags_partial_update
@@ -449,7 +234,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tag'
+                $ref: '#/components/schemas/TagResponse'
           description: ''
     delete:
       operationId: recipe_tags_destroy
@@ -469,9 +254,65 @@ paths:
 
 components:
   schemas:
-    AuthToken:
+    UserCreate:
       type: object
-      description: Serializer for the user auth token.
+      description: Schema for creating a new user.
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        name:
+          type: string
+      required:
+      - email
+      - password
+      - name
+
+    UserUpdate:
+      type: object
+      description: Schema for updating user information.
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        password:
+          type: string
+
+    PatchedUserUpdate:
+      type: object
+      description: Schema for partially updating user information.
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        password:
+          type: string
+
+    UserResponse:
+      type: object
+      description: Schema for user response.
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+      required:
+      - id
+      - email
+      - name
+
+    TokenCreate:
+      type: object
+      description: Schema for token creation (authentication).
       properties:
         email:
           type: string
@@ -482,321 +323,126 @@ components:
       - email
       - password
 
-    AuthTokenRequest:
+    TokenResponse:
       type: object
-      description: Serializer for the user auth token.
+      description: Schema for token response.
       properties:
         email:
           type: string
           format: email
-          minLength: 1
-        password:
+        token:
           type: string
-          minLength: 1
       required:
       - email
-      - password
+      - token
 
-    Ingredient:
+    IngredientWithAmountResponse:
       type: object
-      description: Serializer for ingredients.
+      description: Schema for ingredient response with amount and unit.
       properties:
         id:
           type: integer
-          readOnly: true
         name:
           type: string
-          maxLength: 255
         amount:
           type: string
-          description: Amount of ingredient (e.g., "400", "2")
+          nullable: true
         unit:
           type: string
-          description: Unit of measurement (e.g., "g", "tbsp", "pieces")
+          nullable: true
       required:
       - id
       - name
 
-    IngredientRequest:
+    TagResponse:
       type: object
-      description: Serializer for ingredients.
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 255
-        amount:
-          type: string
-        unit:
-          type: string
-      required:
-      - name
-
-    PatchedIngredientRequest:
-      type: object
-      description: Serializer for ingredients.
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 255
-        amount:
-          type: string
-        unit:
-          type: string
-
-    PatchedRecipeDetailRequest:
-      type: object
-      description: Serializer for recipe detail view.
-      properties:
-        title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        time_minutes:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-        price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
-        link:
-          type: string
-          maxLength: 255
-        tags:
-          type: array
-          items:
-            $ref: '#/components/schemas/TagRequest'
-        ingredients:
-          type: array
-          items:
-            $ref: '#/components/schemas/IngredientRequest'
-        description:
-          type: string
-          description: Step-by-step cooking instructions
-
-    PatchedTagRequest:
-      type: object
-      description: Serializer for tags.
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 255
-
-    PatchedUserRequest:
-      type: object
-      description: Serializer for the user object.
-      properties:
-        email:
-          type: string
-          format: email
-          minLength: 1
-          maxLength: 255
-        password:
-          type: string
-          writeOnly: true
-          minLength: 5
-          maxLength: 128
-        name:
-          type: string
-          minLength: 1
-          maxLength: 255
-
-    Recipe:
-      type: object
-      description: Serializer for recipes.
+      description: Schema for tag response.
       properties:
         id:
           type: integer
-          readOnly: true
-        title:
-          type: string
-          maxLength: 255
-        time_minutes:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-        price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
-        link:
-          type: string
-          maxLength: 255
-        tags:
-          type: array
-          items:
-            $ref: '#/components/schemas/Tag'
-        ingredients:
-          type: array
-          items:
-            $ref: '#/components/schemas/Ingredient'
-      required:
-      - id
-      - price
-      - time_minutes
-      - title
-
-    RecipeDetail:
-      type: object
-      description: Serializer for recipe detail view with step-by-step instructions.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        title:
-          type: string
-          maxLength: 255
-        time_minutes:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-        price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
-        link:
-          type: string
-          maxLength: 255
-        tags:
-          type: array
-          items:
-            $ref: '#/components/schemas/Tag'
-        ingredients:
-          type: array
-          items:
-            $ref: '#/components/schemas/Ingredient'
-        description:
-          type: string
-          description: Step-by-step cooking instructions for the recipe
-      required:
-      - id
-      - price
-      - time_minutes
-      - title
-
-    RecipeDetailRequest:
-      type: object
-      description: Serializer for recipe detail view.
-      properties:
-        title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        time_minutes:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-        price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
-        link:
-          type: string
-          maxLength: 255
-        tags:
-          type: array
-          items:
-            $ref: '#/components/schemas/TagRequest'
-        ingredients:
-          type: array
-          items:
-            $ref: '#/components/schemas/IngredientRequest'
-        description:
-          type: string
-          description: Step-by-step cooking instructions
-      required:
-      - price
-      - time_minutes
-      - title
-
-    RecipeImage:
-      type: object
-      description: Serializer for uploading images to recipes.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        image:
-          type: string
-          format: uri
-          nullable: true
-      required:
-      - id
-      - image
-
-    RecipeImageRequest:
-      type: object
-      description: Serializer for uploading images to recipes.
-      properties:
-        image:
-          type: string
-          format: binary
-          nullable: true
-      required:
-      - image
-
-    Tag:
-      type: object
-      description: Serializer for tags.
-      properties:
-        id:
-          type: integer
-          readOnly: true
         name:
           type: string
-          maxLength: 255
       required:
       - id
       - name
 
     TagRequest:
       type: object
-      description: Serializer for tags.
+      description: Schema for updating a tag.
       properties:
         name:
           type: string
-          minLength: 1
-          maxLength: 255
       required:
       - name
 
-    User:
+    PatchedTagRequest:
       type: object
-      description: Serializer for the user object.
+      description: Schema for partially updating a tag.
       properties:
-        email:
-          type: string
-          format: email
-          maxLength: 255
         name:
           type: string
-          maxLength: 255
-      required:
-      - email
-      - name
 
-    UserRequest:
+    RecipeCreate:
       type: object
-      description: Serializer for the user object.
+      description: Schema for creating a recipe.
       properties:
-        email:
+        title:
           type: string
-          format: email
-          minLength: 1
-          maxLength: 255
-        password:
+        time_minutes:
+          type: integer
+        price:
           type: string
-          writeOnly: true
-          minLength: 5
-          maxLength: 128
-        name:
+        link:
           type: string
-          minLength: 1
-          maxLength: 255
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: integer
+          nullable: true
+        ingredients:
+          type: array
+          items:
+            type: object
+          nullable: true
       required:
-      - email
+      - title
+      - time_minutes
+      - price
+
+    RecipeResponse:
+      type: object
+      description: Schema for recipe response.
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        time_minutes:
+          type: integer
+        price:
+          type: string
+        link:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngredientWithAmountResponse'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagResponse'
+      required:
+      - id
+      - title
+      - time_minutes
+      - price
       - name
       - password
