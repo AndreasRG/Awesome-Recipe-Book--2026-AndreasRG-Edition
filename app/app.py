@@ -24,7 +24,7 @@ app = FastAPI(title="Recipe API (FastAPI ORM)")
 # db_url = os.getenv("DATABASE_URL")
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/app/static", StaticFiles(directory="static"), name="static")
 
 # Templates (used by pages router)
 templates = Jinja2Templates(directory="templates")
