@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Use env file at runtime (we'll mount it on the VM)
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "5000"]
