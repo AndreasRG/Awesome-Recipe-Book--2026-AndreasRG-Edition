@@ -27,7 +27,7 @@ The services layer contains all business logic and database operations. Services
 
 Services contain the logic that endpoints depend on. When a router receives a request, it never performs database operations directly. Instead, it calls a service function. This ensures that all business logic is centralized and reusable.
 
-*NOTE: All endpoints use the base URL "http://localhost:5000".*
+*NOTE: All endpoints use the base URL "http://localhost:8000".*
 
 Example: GET /api/recipe/recipes/
 

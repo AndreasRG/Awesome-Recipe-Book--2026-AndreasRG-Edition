@@ -35,7 +35,7 @@ Routers define the public interface of the application. They receive HTTP reques
 
 ### How endpoints work inside routers:
 
-Routers define the actual HTTP endpoints of the application. Each endpoint corresponds to a specific HTTP method and path. All endpoints use the base URL "http://localhost:5000". For example:
+Routers define the actual HTTP endpoints of the application. Each endpoint corresponds to a specific HTTP method and path. All endpoints use the base URL "http://localhost:8000". For example:
 
 - GET /api/recipe/recipes/
 

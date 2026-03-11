@@ -25,9 +25,7 @@ Key upgrades include:
 
 ## How to install and launch via bash:
 
-Clone the repository to your machine in terminal by "git clone https://github.com/AndreasRG/recipe-book-project-exam-summer-26.git". 
-
-Enter the "optimized-project" folder in terminal by "cd C: ..path/optimized-project".
+Clone the repository to your machine in terminal by "git clone https://github.com/AndreasRG/Awesome-Recipe-Book--2026-AndreasRG-Edition.git". 
 
 Make sure to have Python 3.12.x installed by either option (note: requires admin rights):
 - Windows via Chocolatey: "choco install python --version=3.12"
@@ -47,9 +45,9 @@ Install .venv environment using terminal by "python -m venv .venv".
 
 Install dependencies using terminal with requirements.txt by "pip install -r requirements.txt".
 
-Launch the application in terminal by "python app.py".
+Launch the application in terminal by "uvicorn app.app:app --reload".
 
-The application will now start on "http://localhost:5000".
+The application will now start on "http://localhost:8000".
 
 To stop the application do "ctrl + c" in the running terminal.
 
@@ -59,9 +57,9 @@ To stop the application do "ctrl + c" in the running terminal.
 
 Clone the repository to your machine. 
 
-Enter the "optimized-project" folder in terminal by "cd C:..path../optimized-project".
+Install and launch the application in terminal using Docker by "docker build -t recipe-app .".
 
-Install and launch the application in terminal using Docker by "docker-compose up --build".
+Launch the application in terminal by "docker run -p 5000:5000 recipe-app".
 
 The application will now start on "http://localhost:5000".
 
