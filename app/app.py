@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from app.routers import pages, recipes, users
 from app.database import init_db
 
-from app.dotenv import load_dotenv
+# from app.dotenv import load_dotenv
 import os
 
 # ---------------------------------------------------------
@@ -18,7 +18,7 @@ import os
 
 app = FastAPI(title="Recipe API (FastAPI ORM)")
 
-load_dotenv()
+# load_dotenv()
 
 # Example usage:
 # db_url = os.getenv("DATABASE_URL")
