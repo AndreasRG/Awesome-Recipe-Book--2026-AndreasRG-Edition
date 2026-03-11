@@ -8,6 +8,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
     steps:
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v1.0.3
