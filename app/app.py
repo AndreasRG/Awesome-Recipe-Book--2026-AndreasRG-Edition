@@ -16,9 +16,9 @@ import os
 # App setup
 # ---------------------------------------------------------
 
-load_dotenv()
-
 app = FastAPI(title="Recipe API (FastAPI ORM)")
+
+load_dotenv()
 
 # Example usage:
 # db_url = os.getenv("DATABASE_URL")
