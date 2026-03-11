@@ -16,7 +16,7 @@ from app.services.recipes import list_recipes, get_recipe
 
 router = APIRouter(tags=["pages"])
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/")
@@ -36,7 +36,7 @@ async def home(request: Request, db: AsyncSession = Depends(get_db_session)):
     ]
 
     return templates.TemplateResponse(
-        "app/templates/home.html",
+        "home.html",
         {"request": request, "recipes": recipe_list}
     )
 
@@ -51,7 +51,7 @@ async def recipe_detail(id: int, request: Request, db: AsyncSession = Depends(ge
 
     if not recipe:
         return templates.TemplateResponse(
-            "app/templates/recipe_not_found.html",
+            "recipe_not_found.html",
             {"request": request},
             status_code=404
         )
@@ -68,6 +68,6 @@ async def recipe_detail(id: int, request: Request, db: AsyncSession = Depends(ge
     }
 
     return templates.TemplateResponse(
-        "app/templates/recipe_detail.html",
+        "recipe_detail.html",
         {"request": request, "recipe": recipe_data}
     )
