@@ -5,14 +5,13 @@
 import asyncio
 
 import uvicorn
+from database import init_db
 
 # from app.dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
-from app.database import init_db
-from app.routers import pages, recipes, users
+from routers import pages, recipes, users
 
 # ---------------------------------------------------------
 # App setup
@@ -26,10 +25,10 @@ app = FastAPI(title="Recipe API (FastAPI ORM)")
 # db_url = os.getenv("DATABASE_URL")
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Templates (used by pages router)
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory="templates")
 
 
 # ---------------------------------------------------------
