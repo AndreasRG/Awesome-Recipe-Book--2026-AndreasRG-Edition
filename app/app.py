@@ -2,15 +2,17 @@
 # Imports
 # ---------------------------------------------------------
 
+import asyncio
+
+import uvicorn
+
+# from app.dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.routers import pages, recipes, users
 from app.database import init_db
-
-# from app.dotenv import load_dotenv
-import os
+from app.routers import pages, recipes, users
 
 # ---------------------------------------------------------
 # App setup
@@ -43,6 +45,7 @@ app.include_router(users.router)
 # Startup: Create tables
 # ---------------------------------------------------------
 
+
 @app.on_event("startup")
 async def startup_event():
     await init_db()
@@ -51,6 +54,7 @@ async def startup_event():
 # ---------------------------------------------------------
 # API Overview
 # ---------------------------------------------------------
+
 
 @app.get("/api")
 async def api_overview():
@@ -61,7 +65,7 @@ async def api_overview():
         "recipes_url": "/api/recipe/recipes/",
         "recipe_url": "/api/recipe/recipes/{id}/",
         "ingredients_url": "/api/recipe/ingredients/",
-        "tags_url": "/api/recipe/tags/"
+        "tags_url": "/api/recipe/tags/",
     }
 
 
@@ -69,15 +73,6 @@ async def api_overview():
 # Run with python app.py
 # ---------------------------------------------------------
 
-import uvicorn
-import asyncio
 
 if __name__ == "__main__":
-    asyncio.run(
-        uvicorn.run(
-            "app:app",
-            host="0.0.0.0",
-            port=5000,
-            reload=False
-        )
-    )
+    asyncio.run(uvicorn.run("app:app", host="0.0.0.0", port=5000, reload=False))

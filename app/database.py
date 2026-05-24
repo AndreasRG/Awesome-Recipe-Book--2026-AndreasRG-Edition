@@ -2,10 +2,12 @@
 """
 Database configuration module using SQLAlchemy ORM with async support.
 """
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
+
 import logging
+
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +69,14 @@ async def seed_database():
     Seed the database with test data from JSON file if it's empty.
     """
     import json
-    from app.models import User, Recipe, Ingredient, Tag, recipe_ingredients, recipe_tags
+
+    from app.models import (
+        Ingredient,
+        Recipe,
+        Tag,
+        recipe_ingredients,
+        recipe_tags,
+    )
 
     async with AsyncSessionLocal() as session:
         try:
@@ -108,7 +117,7 @@ async def seed_database():
                         time_minutes=recipe_data["time_minutes"],
                         price=recipe_data["price"],
                         link=recipe_data["link"],
-                        description=recipe_data["description"]
+                        description=recipe_data["description"],
                     )
                     session.add(recipe)
                     recipes.append(recipe)
@@ -124,7 +133,7 @@ async def seed_database():
                                 recipe_id=recipe.id,
                                 ingredient_id=ingredients[ing_data["index"]].id,
                                 amount=ing_data["amount"],
-                                unit=ing_data["unit"]
+                                unit=ing_data["unit"],
                             )
                         )
 
@@ -134,8 +143,7 @@ async def seed_database():
                     for tag_idx in recipe_data["tags"]:
                         await session.execute(
                             recipe_tags.insert().values(
-                                recipe_id=recipe.id,
-                                tag_id=tags[tag_idx].id
+                                recipe_id=recipe.id, tag_id=tags[tag_idx].id
                             )
                         )
 

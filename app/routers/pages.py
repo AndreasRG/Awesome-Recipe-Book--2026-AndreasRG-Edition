@@ -2,13 +2,12 @@
 # Imports
 # ---------------------------------------------------------
 
-from fastapi import APIRouter, Request, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, Request
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db_session
-from app.services.recipes import list_recipes, get_recipe
-
+from app.services.recipes import get_recipe, list_recipes
 
 # ---------------------------------------------------------
 # Home page (HTML)
@@ -30,14 +29,13 @@ async def home(request: Request, db: AsyncSession = Depends(get_db_session)):
             "time_minutes": r.time_minutes,
             "price": r.price,
             "link": r.link or "",
-            "tags": [{"id": t.id, "name": t.name} for t in r.tags]
+            "tags": [{"id": t.id, "name": t.name} for t in r.tags],
         }
         for r in recipes
     ]
 
     return templates.TemplateResponse(
-        "home.html",
-        {"request": request, "recipes": recipe_list}
+        "home.html", {"request": request, "recipes": recipe_list}
     )
 
 
@@ -45,15 +43,16 @@ async def home(request: Request, db: AsyncSession = Depends(get_db_session)):
 # Recipe detail (HTML)
 # ---------------------------------------------------------
 
+
 @router.get("/recipes/{id}/")
-async def recipe_detail(id: int, request: Request, db: AsyncSession = Depends(get_db_session)):
+async def recipe_detail(
+    id: int, request: Request, db: AsyncSession = Depends(get_db_session)
+):
     recipe = await get_recipe(db, id)
 
     if not recipe:
         return templates.TemplateResponse(
-            "recipe_not_found.html",
-            {"request": request},
-            status_code=404
+            "recipe_not_found.html", {"request": request}, status_code=404
         )
 
     recipe_data = {
@@ -64,10 +63,9 @@ async def recipe_detail(id: int, request: Request, db: AsyncSession = Depends(ge
         "link": recipe.link or "",
         "description": recipe.description or "",
         "ingredients": [{"id": ing.id, "name": ing.name} for ing in recipe.ingredients],
-        "tags": [{"id": t.id, "name": t.name} for t in recipe.tags]
+        "tags": [{"id": t.id, "name": t.name} for t in recipe.tags],
     }
 
     return templates.TemplateResponse(
-        "recipe_detail.html",
-        {"request": request, "recipe": recipe_data}
+        "recipe_detail.html", {"request": request, "recipe": recipe_data}
     )
