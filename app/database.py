@@ -70,7 +70,7 @@ async def seed_database():
     """
     import json
 
-    from app.models import (
+    from models import (
         Ingredient,
         Recipe,
         Tag,

@@ -3,10 +3,9 @@
 SQLAlchemy ORM models for the Recipe API.
 """
 
+from database import Base
 from sqlalchemy import Column, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import relationship
-
-from app.database import Base
 
 # Association table for Recipe-Ingredient relationship
 recipe_ingredients = Table(
