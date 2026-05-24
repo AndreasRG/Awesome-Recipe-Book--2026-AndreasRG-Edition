@@ -2,10 +2,11 @@ version: "3.9"
 
 services:
   app:
-    build: .
+    image: ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
     container_name: exam-app
     expose:
       - "5000"
+    pull_policy: always
     restart: unless-stopped
 
   reverse-proxy:
