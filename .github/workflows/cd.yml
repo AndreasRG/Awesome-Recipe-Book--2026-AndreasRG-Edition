@@ -15,52 +15,33 @@ jobs:
     - name: Extract short SHA
       run: echo "SHA_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-    - name: Determine next color
-      id: color
-      run: |
-        if [ -f .bluegreen ]; then
-          CURRENT=$(cat .bluegreen)
-        else
-          CURRENT=green
-        fi
-
-        if [ "$CURRENT" = "blue" ]; then
-          NEXT=green
-        else
-          NEXT=blue
-        fi
-
-        echo "next=$NEXT" >> $GITHUB_OUTPUT
-
     - name: Log in to GHCR
       run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u andreasrg --password-stdin
 
-    - name: Build image with SHA + color tag
+    - name: Build image with SHA + latest
       run: |
         docker build --no-cache \
-          -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${{ steps.color.outputs.next }} \
           -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${{ env.SHA_TAG }} \
+          -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest \
           .
 
     - name: Push images
       run: |
-        docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${{ steps.color.outputs.next }}
         docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${{ env.SHA_TAG }}
+        docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest
 
-    - name: Update color file
-      run: echo "${{ steps.color.outputs.next }}" > .bluegreen
-
-    - name: Deploy to Azure VM (Swarm)
+    - name: Deploy to Azure VM
       uses: appleboy/ssh-action@v1.0.3
       env:
-        COLOR_TAG: ${{ steps.color.outputs.next }}
+        SHA_TAG: ${{ env.SHA_TAG }}
       with:
         host: ${{ secrets.VM_HOST }}
         username: ${{ secrets.VM_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        envs: COLOR_TAG
+        envs: SHA_TAG # 👈 THIS IS THE CRITICAL ADDITION. It tells the action to pass SHA_TAG over SSH.
         script: |
           cd ~/Awesome-Recipe-Book--2026-AndreasRG-Edition
-          export SHA_TAG=$COLOR_TAG
-          docker stack deploy -c docker-stack.yml exam
+          echo "SHA_TAG=$SHA_TAG" > .env
+          docker compose pull
+          docker compose up -d
           docker image prune -f
