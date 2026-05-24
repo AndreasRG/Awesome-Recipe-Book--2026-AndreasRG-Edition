@@ -14,13 +14,20 @@ jobs:
         fetch-depth: 0
         submodules: recursive
 
+    - name: Extract short SHA
+      run: echo "SHA_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
+
     - name: Log in to GHCR
       run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u andreasrg --password-stdin
 
-    - name: Build image
-      run: docker build --no-cache -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest .
+    - name: Build image with SHA tag
+      run: |
+        docker build --no-cache \
+          -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG} \
+          -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest \
+          .
 
-    - name: Push image
-      run: docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest
-
-
+    - name: Push SHA-tagged and latest images
+      run: |
+        docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
+        docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest
