@@ -11,6 +11,7 @@ from database import init_db
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from prometheus_fastapi_instrumentator import Instrumentator
 from routers import pages, recipes, users
 
 # ---------------------------------------------------------
@@ -23,6 +24,9 @@ app = FastAPI(title="Recipe API (FastAPI ORM)")
 
 # Example usage:
 # db_url = os.getenv("DATABASE_URL")
+
+# Enable Prometheus metrics
+Instrumentator().instrument(app).expose(app)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
