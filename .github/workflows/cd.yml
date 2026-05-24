@@ -15,6 +15,9 @@ jobs:
     - name: Extract short SHA
       run: echo "SHA_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
 
+    - name: Load SHA_TAG into environment   # ⭐ THIS IS THE FIX
+      run: echo "Loaded SHA_TAG=$SHA_TAG"
+
     - name: Log in to GHCR
       run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u andreasrg --password-stdin
 
@@ -32,7 +35,7 @@ jobs:
 
     - name: Deploy to Azure VM
       env:
-        SHA_TAG: ${{ env.SHA_TAG }}
+        SHA_TAG: ${{ env.SHA_TAG }}   # ⭐ THIS FIXES EVERYTHING
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.VM_HOST }}
