@@ -2,23 +2,19 @@
 # Imports
 # ---------------------------------------------------------
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User
-
 
 # ---------------------------------------------------------
 # Users Service Logic
 # ---------------------------------------------------------
 
+
 async def create_user(db: AsyncSession, data):
     """Create a new user."""
-    new_user = User(
-        email=data.email,
-        password=data.password,
-        name=data.name
-    )
+    new_user = User(email=data.email, password=data.password, name=data.name)
 
     db.add(new_user)
     await db.commit()
@@ -28,9 +24,7 @@ async def create_user(db: AsyncSession, data):
 
 async def authenticate_user(db: AsyncSession, email: str, password: str):
     """Return user if email/password match, else None."""
-    result = await db.execute(
-        select(User).where(User.email == email)
-    )
+    result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
 
     if not user or user.password != password:

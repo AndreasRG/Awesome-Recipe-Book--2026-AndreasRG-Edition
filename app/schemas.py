@@ -2,16 +2,19 @@
 """
 Pydantic schemas for request/response validation in the Recipe API.
 """
-from pydantic import BaseModel
-from typing import Optional, List
 
+from typing import List, Optional
+
+from pydantic import BaseModel
 
 # =====================
 # User Schemas
 # =====================
 
+
 class UserCreate(BaseModel):
     """Schema for creating a new user."""
+
     email: str
     password: str
     name: str
@@ -22,6 +25,7 @@ class UserCreate(BaseModel):
 
 class UserUpdate(BaseModel):
     """Schema for updating user information."""
+
     email: Optional[str] = None
     name: Optional[str] = None
     password: Optional[str] = None
@@ -32,6 +36,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(BaseModel):
     """Schema for user response."""
+
     id: int
     email: str
     name: str
@@ -44,14 +49,17 @@ class UserResponse(BaseModel):
 # Token Schemas
 # =====================
 
+
 class TokenCreate(BaseModel):
     """Schema for token creation (authentication)."""
+
     email: str
     password: str
 
 
 class TokenResponse(BaseModel):
     """Schema for token response."""
+
     email: str
     token: str
 
@@ -60,8 +68,10 @@ class TokenResponse(BaseModel):
 # Ingredient Schemas
 # =====================
 
+
 class IngredientCreate(BaseModel):
     """Schema for creating an ingredient."""
+
     name: str
 
     class Config:
@@ -70,6 +80,7 @@ class IngredientCreate(BaseModel):
 
 class IngredientResponse(BaseModel):
     """Schema for ingredient response."""
+
     id: int
     name: str
 
@@ -79,6 +90,7 @@ class IngredientResponse(BaseModel):
 
 class IngredientWithAmountResponse(BaseModel):
     """Schema for ingredient response with amount and unit."""
+
     id: int
     name: str
     amount: Optional[str] = None
@@ -92,8 +104,10 @@ class IngredientWithAmountResponse(BaseModel):
 # Tag Schemas
 # =====================
 
+
 class TagCreate(BaseModel):
     """Schema for creating a tag."""
+
     name: str
 
     class Config:
@@ -102,6 +116,7 @@ class TagCreate(BaseModel):
 
 class TagResponse(BaseModel):
     """Schema for tag response."""
+
     id: int
     name: str
 
@@ -113,8 +128,10 @@ class TagResponse(BaseModel):
 # Recipe Schemas
 # =====================
 
+
 class RecipeCreate(BaseModel):
     """Schema for creating a recipe."""
+
     title: str
     time_minutes: int
     price: str
@@ -129,6 +146,7 @@ class RecipeCreate(BaseModel):
 
 class RecipeUpdate(BaseModel):
     """Schema for updating a recipe."""
+
     title: Optional[str] = None
     time_minutes: Optional[int] = None
     price: Optional[str] = None
@@ -143,6 +161,7 @@ class RecipeUpdate(BaseModel):
 
 class RecipeResponse(BaseModel):
     """Schema for recipe response."""
+
     id: int
     title: str
     time_minutes: int
@@ -154,31 +173,3 @@ class RecipeResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-# ---------------------------------------------------------
-# Pydantic Schemas
-# ---------------------------------------------------------
-
-class UserCreate(BaseModel):
-    email: str
-    password: str
-    name: str
-
-class UserUpdate(BaseModel):
-    email: Optional[str] = None
-    name: Optional[str] = None
-    password: Optional[str] = None
-
-class TokenCreate(BaseModel):
-    email: str
-    password: str
-
-class RecipeCreate(BaseModel):
-    title: str
-    time_minutes: int
-    price: str
-    link: Optional[str] = None
-    description: Optional[str] = None
-    tags: Optional[List[int]] = None
-    ingredients: Optional[List[int]] = None

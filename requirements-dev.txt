@@ -1,0 +1,5 @@
+pre-commit # only install once, to install the pre-commit
+ruff
+mypy
+pytest
+pytest-asyncio

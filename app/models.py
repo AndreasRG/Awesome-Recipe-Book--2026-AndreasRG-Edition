@@ -2,31 +2,34 @@
 """
 SQLAlchemy ORM models for the Recipe API.
 """
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table
+
+from sqlalchemy import Column, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import relationship
+
 from app.database import Base
 
 # Association table for Recipe-Ingredient relationship
 recipe_ingredients = Table(
-    'recipe_ingredients',
+    "recipe_ingredients",
     Base.metadata,
-    Column('recipe_id', Integer, ForeignKey('recipes.id'), primary_key=True),
-    Column('ingredient_id', Integer, ForeignKey('ingredients.id'), primary_key=True),
-    Column('amount', String),
-    Column('unit', String),
+    Column("recipe_id", Integer, ForeignKey("recipes.id"), primary_key=True),
+    Column("ingredient_id", Integer, ForeignKey("ingredients.id"), primary_key=True),
+    Column("amount", String),
+    Column("unit", String),
 )
 
 # Association table for Recipe-Tag relationship
 recipe_tags = Table(
-    'recipe_tags',
+    "recipe_tags",
     Base.metadata,
-    Column('recipe_id', Integer, ForeignKey('recipes.id'), primary_key=True),
-    Column('tag_id', Integer, ForeignKey('tags.id'), primary_key=True),
+    Column("recipe_id", Integer, ForeignKey("recipes.id"), primary_key=True),
+    Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True),
 )
 
 
 class User(Base):
     """User model for application users."""
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -40,6 +43,7 @@ class User(Base):
 
 class Recipe(Base):
     """Recipe model for storing recipe information."""
+
     __tablename__ = "recipes"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -55,13 +59,10 @@ class Recipe(Base):
         "Ingredient",
         secondary=recipe_ingredients,
         backref="recipes",
-        cascade="all, delete"
+        cascade="all, delete",
     )
     tags = relationship(
-        "Tag",
-        secondary=recipe_tags,
-        backref="recipes",
-        cascade="all, delete"
+        "Tag", secondary=recipe_tags, backref="recipes", cascade="all, delete"
     )
 
     def __repr__(self):
@@ -70,6 +71,7 @@ class Recipe(Base):
 
 class Ingredient(Base):
     """Ingredient model for recipe ingredients."""
+
     __tablename__ = "ingredients"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -81,6 +83,7 @@ class Ingredient(Base):
 
 class Tag(Base):
     """Tag model for recipe categorization."""
+
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True, index=True)
