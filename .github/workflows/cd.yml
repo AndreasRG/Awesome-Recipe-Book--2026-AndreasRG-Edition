@@ -1,18 +1,16 @@
-name: Build and Push Image
+name: Build, Push and Deploy
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-        submodules: recursive
+    - name: Checkout repository
+      uses: actions/checkout@v5
 
     - name: Extract short SHA
       run: echo "SHA_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
@@ -20,14 +18,27 @@ jobs:
     - name: Log in to GHCR
       run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u andreasrg --password-stdin
 
-    - name: Build image with SHA tag
+    - name: Build image with SHA + latest
       run: |
         docker build --no-cache \
           -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG} \
           -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest \
           .
 
-    - name: Push SHA-tagged and latest images
+    - name: Push images
       run: |
         docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
         docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest
+
+    - name: Deploy to Azure VM
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.VM_HOST }}
+        username: ${{ secrets.VM_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd ~/Awesome-Recipe-Book--2026-AndreasRG-Edition
+          echo "SHA_TAG=${SHA_TAG}" > .env
+          docker compose pull
+          docker compose up -d
+          docker image prune -f
