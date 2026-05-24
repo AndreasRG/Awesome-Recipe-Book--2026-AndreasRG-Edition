@@ -72,11 +72,5 @@ async def api_overview():
 # Run with python app.py
 # ---------------------------------------------------------
 
-number1 = 3
-number3 = 5
-sum = number1 + number3
-print(f"Sum: {sum}")
-
-
 if __name__ == "__main__":
     asyncio.run(uvicorn.run("app:app", host="0.0.0.0", port=5000, reload=False))
