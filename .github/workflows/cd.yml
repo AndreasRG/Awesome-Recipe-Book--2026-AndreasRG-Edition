@@ -21,13 +21,13 @@ jobs:
     - name: Build image with SHA + latest
       run: |
         docker build --no-cache \
-          -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG} \
+          -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:$SHA_TAG \
           -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest \
           .
 
     - name: Push images
       run: |
-        docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
+        docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:$SHA_TAG
         docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest
 
     - name: Deploy to Azure VM
@@ -38,7 +38,7 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           cd ~/Awesome-Recipe-Book--2026-AndreasRG-Edition
-          echo "SHA_TAG=${SHA_TAG}" > .env
+          echo "SHA_TAG=$SHA_TAG" > .env
           docker compose pull
           docker compose up -d
           docker image prune -f
