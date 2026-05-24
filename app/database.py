@@ -88,7 +88,7 @@ async def seed_database():
                 logger.info("Seeding database with test data...")
 
                 # Load test data from JSON file
-                with open("app/test_data.json", "r", encoding="utf-8") as f:
+                with open("test_data.json", "r", encoding="utf-8") as f:
                     data = json.load(f)
 
                 # Create ingredients
