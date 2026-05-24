@@ -1,26 +1,23 @@
-name: Deploy to Azure VM
+name: Build and Push Image
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
-    env:
-      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-
     steps:
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.VM_HOST }}
-        username: ${{ secrets.VM_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          echo "CONNECTED TO VM"
-          hostname
-          cd /home/azureuser/deploy
-          ./run.sh
+    - uses: actions/checkout@v5
+
+    - name: Log in to GHCR
+      run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u andreasrg --password-stdin
+
+    - name: Build image
+      run: docker build -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest .
+
+    - name: Push image
+      run: docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest
+
 
