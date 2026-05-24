@@ -15,32 +15,30 @@ jobs:
     - name: Extract short SHA
       run: echo "SHA_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-    - name: Load SHA_TAG into environment   # ⭐ THIS IS THE FIX
-      run: echo "Loaded SHA_TAG=$SHA_TAG"
-
     - name: Log in to GHCR
       run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u andreasrg --password-stdin
 
     - name: Build image with SHA + latest
       run: |
         docker build --no-cache \
-          -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:$SHA_TAG \
+          -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${{ env.SHA_TAG }} \
           -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest \
           .
 
     - name: Push images
       run: |
-        docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:$SHA_TAG
+        docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${{ env.SHA_TAG }}
         docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest
 
     - name: Deploy to Azure VM
-      env:
-        SHA_TAG: ${{ env.SHA_TAG }}   # ⭐ THIS FIXES EVERYTHING
       uses: appleboy/ssh-action@v1.0.3
+      env:
+        SHA_TAG: ${{ env.SHA_TAG }}
       with:
         host: ${{ secrets.VM_HOST }}
         username: ${{ secrets.VM_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
+        envs: SHA_TAG # 👈 THIS IS THE CRITICAL ADDITION. It tells the action to pass SHA_TAG over SSH.
         script: |
           cd ~/Awesome-Recipe-Book--2026-AndreasRG-Edition
           echo "SHA_TAG=$SHA_TAG" > .env
