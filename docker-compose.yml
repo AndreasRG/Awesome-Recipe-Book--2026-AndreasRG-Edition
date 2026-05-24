@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   app:
-    build: ./app
+    build: .
     container_name: exam-app
     expose:
       - "5000"
