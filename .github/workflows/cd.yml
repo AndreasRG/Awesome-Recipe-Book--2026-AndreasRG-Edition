@@ -31,9 +31,9 @@ jobs:
         docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest
 
     - name: Deploy to Azure VM
-      uses: appleboy/ssh-action@v1.0.3
       env:
         SHA_TAG: ${{ env.SHA_TAG }}
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.VM_HOST }}
         username: ${{ secrets.VM_USER }}
