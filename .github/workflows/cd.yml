@@ -15,10 +15,6 @@ jobs:
     - name: Extract short SHA
       run: echo "SHA_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-    - name: Load SHA_TAG into job environment
-      run: echo "SHA_TAG=${{ env.SHA_TAG }}" >> $GITHUB_ENV
-
-
     - name: Load SHA_TAG into environment   # ⭐ THIS IS THE FIX
       run: echo "Loaded SHA_TAG=$SHA_TAG"
 
