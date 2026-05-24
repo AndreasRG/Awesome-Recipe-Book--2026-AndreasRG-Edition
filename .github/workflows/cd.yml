@@ -18,7 +18,7 @@ jobs:
       run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u andreasrg --password-stdin
 
     - name: Build image
-      run: docker build -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest .
+      run: docker build --no-cache -t ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest .
 
     - name: Push image
       run: docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest
