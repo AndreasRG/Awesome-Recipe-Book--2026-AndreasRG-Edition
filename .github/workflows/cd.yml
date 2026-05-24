@@ -32,6 +32,8 @@ jobs:
 
     - name: Deploy to Azure VM
       uses: appleboy/ssh-action@v1.0.3
+      env:
+        SHA_TAG: ${{ env.SHA_TAG }}
       with:
         host: ${{ secrets.VM_HOST }}
         username: ${{ secrets.VM_USER }}
