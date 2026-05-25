@@ -56,14 +56,16 @@ jobs:
           git fetch --all
           git reset --hard origin/main
 
-          docker compose -f docker-compose.app.yml down
-          docker system prune -a -f
-
           echo "SHA_TAG=$SHA_TAG" > .env.app
 
           docker compose -f docker-compose.app.yml pull
-          docker compose -f docker-compose.app.yml up -d
+
+          chmod +x rolling_update.sh
+
+          ./scripts/rolling_update.sh
+
           docker image prune -f
+
 
   deploy-proxy-vm:
     needs: build

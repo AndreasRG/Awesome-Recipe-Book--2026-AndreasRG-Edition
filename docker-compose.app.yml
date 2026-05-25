@@ -19,6 +19,11 @@ services:
       - app-network
     environment:
       - APP_INSTANCE=app1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
 
   app2:
     image: ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
@@ -32,6 +37,11 @@ services:
       - app-network
     environment:
       - APP_INSTANCE=app2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
 
   app3:
     image: ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
@@ -45,6 +55,11 @@ services:
       - app-network
     environment:
       - APP_INSTANCE=app3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
 
 # Node exporter for host metrics (monitored by Proxy VM Prometheus)
   node-exporter-app:
