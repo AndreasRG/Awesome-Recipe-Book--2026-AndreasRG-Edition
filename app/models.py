@@ -16,6 +16,7 @@ recipe_ingredients = Table(
     Column("ingredient_id", Integer, ForeignKey("ingredients.id"), primary_key=True),
     Column("amount", String),
     Column("unit", String),
+    extend_existing=True,
 )
 
 # Association table for Recipe-Tag relationship
@@ -24,6 +25,7 @@ recipe_tags = Table(
     Base.metadata,
     Column("recipe_id", Integer, ForeignKey("recipes.id"), primary_key=True),
     Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True),
+    extend_existing=True,
 )
 
 

@@ -3,6 +3,7 @@
 Database configuration module using SQLAlchemy ORM with async support.
 """
 
+import json
 import logging
 
 from sqlalchemy import text
@@ -68,9 +69,7 @@ async def seed_database():
     """
     Seed the database with test data from JSON file if it's empty.
     """
-    import json
-
-    from models import (
+    from app.models import (
         Ingredient,
         Recipe,
         Tag,

@@ -20,12 +20,13 @@ attempt_update() {
   docker compose -f docker-compose.app.yml up -d --force-recreate --no-deps $SERVICE
 
   # Initial grace period - let the app start before checking health
-  echo "[$(date +'%H:%M:%S')] Waiting 10s for container startup..."
-  sleep 10
+  # Azure machines are slow, so we give it plenty of time
+  echo "[$(date +'%H:%M:%S')] Waiting 30s for container to initialize..."
+  sleep 30
 
   # Wait for healthcheck to pass
   TIMEOUT=0
-  MAX_TIMEOUT=120
+  MAX_TIMEOUT=150
   
   while [ $TIMEOUT -lt $MAX_TIMEOUT ]; do
     STATUS=$(docker inspect --format='{{.State.Health.Status}}' $SERVICE 2>/dev/null)
