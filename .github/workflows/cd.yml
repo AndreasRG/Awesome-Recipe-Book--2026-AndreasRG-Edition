@@ -52,7 +52,12 @@ jobs:
         envs: SHA_TAG
         script: |
           cd ~/Awesome-Recipe-Book--2026-AndreasRG-Edition
+
+          git fetch --all
+          git reset --hard origin/main
+
           echo "SHA_TAG=$SHA_TAG" > .env.app
+
           docker compose -f docker-compose.app.yml pull
           docker compose -f docker-compose.app.yml up -d
           docker image prune -f
@@ -81,6 +86,11 @@ jobs:
         envs: SHA_TAG,APP_VM_HOST,GRAFANA_PASSWORD
         script: |
           cd ~/Awesome-Recipe-Book--2026-AndreasRG-Edition
+
+          # Always sync repo with GitHub
+          git fetch --all
+          git reset --hard origin/main
+
           echo "SHA_TAG=$SHA_TAG" > .env.proxy
           echo "APP_VM_HOST=$APP_VM_HOST" >> .env.proxy
           echo "GRAFANA_PASSWORD=$GRAFANA_PASSWORD" >> .env.proxy
