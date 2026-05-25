@@ -19,9 +19,13 @@ attempt_update() {
   # Try to update/create the service
   docker compose -f docker-compose.app.yml up -d --force-recreate --no-deps $SERVICE
 
+  # Initial grace period - let the app start before checking health
+  echo "[$(date +'%H:%M:%S')] Waiting 10s for container startup..."
+  sleep 10
+
   # Wait for healthcheck to pass
   TIMEOUT=0
-  MAX_TIMEOUT=90
+  MAX_TIMEOUT=120
   
   while [ $TIMEOUT -lt $MAX_TIMEOUT ]; do
     STATUS=$(docker inspect --format='{{.State.Health.Status}}' $SERVICE 2>/dev/null)
