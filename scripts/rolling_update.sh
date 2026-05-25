@@ -7,6 +7,43 @@ force_update_service() {
   SERVICE=$1
   echo "FORCE updating $SERVICE..."
 
+  # If the service does not exist or is not running, recreate it using fallback templates
+  if ! docker ps -a --format '{{.Names}}' | grep -q "^${SERVICE}$"; then
+    echo "$SERVICE does not exist. Attempting to recreate using fallback templates..."
+
+    TEMPLATE=""
+
+    # Try app3 first
+    if docker ps -a --format '{{.Names}}' | grep -q "^app3$"; then
+      TEMPLATE="app3"
+    # If app3 doesn't exist, try app2
+    elif docker ps -a --format '{{.Names}}' | grep -q "^app2$"; then
+      TEMPLATE="app2"
+    fi
+
+    # If no template exists, abort
+    if [ -z "$TEMPLATE" ]; then
+      echo "ERROR: No template apps exist, manual fix required!"
+      exit 1
+    fi
+
+    echo "Using $TEMPLATE as template for recreating $SERVICE..."
+
+    # Get image from template
+    IMAGE=$(docker inspect --format='{{.Config.Image}}' $TEMPLATE 2>/dev/null)
+
+    if [ -z "$IMAGE" ]; then
+      echo "ERROR: Could not determine image from $TEMPLATE. Aborting."
+      exit 1
+    fi
+
+    echo "Using image: $IMAGE"
+
+    # Recreate the missing service
+    docker compose -f docker-compose.app.yml up -d --no-deps --force-recreate $SERVICE
+  fi
+
+  # Now perform the normal forced update
   docker compose -f docker-compose.app.yml up -d --force-recreate --no-deps $SERVICE
 
   echo "Waiting for $SERVICE to become healthy..."
@@ -27,6 +64,8 @@ force_update_service() {
     sleep 2
   done
 }
+
+
 
 update_service_if_healthy() {
   SERVICE=$1
@@ -63,10 +102,6 @@ update_service_if_healthy() {
     sleep 2
   done
 }
-
-
-echo "Ensuring all services exist before rolling update..."
-docker compose -f docker-compose.app.yml up -d
 
 
 # 1. app1 ALWAYS updates
