@@ -24,9 +24,30 @@ jobs:
     - name: Run Ruff
       run: ruff check .
 
-  build-and-push:
+  test:
     runs-on: ubuntu-latest
     needs: lint
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run pytest
+      run: pytest -q
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: test
 
     steps:
     - name: Checkout code
