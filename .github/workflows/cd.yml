@@ -60,7 +60,7 @@ jobs:
 
           docker compose -f docker-compose.app.yml pull
 
-          chmod +x rolling_update.sh
+          chmod +x scripts/rolling_update.sh
 
           ./scripts/rolling_update.sh
 
