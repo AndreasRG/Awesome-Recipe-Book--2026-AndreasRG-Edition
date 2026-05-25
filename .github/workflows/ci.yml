@@ -42,6 +42,9 @@ jobs:
         pip install -r app/requirements.txt
         pip install -r requirements-dev.txt
 
+    - name: Add repo root to PYTHONPATH
+      run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+
     - name: Run pytest
       run: pytest -q
 
