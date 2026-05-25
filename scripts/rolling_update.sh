@@ -16,6 +16,12 @@ force_update_service() {
       echo "$SERVICE is healthy!"
       break
     fi
+
+    if [ "$STATUS" = "unhealthy" ]; then
+      echo "ERROR: $SERVICE failed health check. Aborting deployment."
+      exit 1
+    fi
+
     sleep 2
   done
 }
@@ -29,8 +35,8 @@ update_service_if_healthy() {
   STATUS=$(docker inspect --format='{{.State.Health.Status}}' $PREVIOUS 2>/dev/null)
 
   if [ "$STATUS" != "healthy" ]; then
-    echo "ERROR: $PREVIOUS is NOT healthy. Skipping update of $SERVICE."
-    return
+    echo "ERROR: $PREVIOUS is NOT healthy. Aborting deployment."
+    exit 1
   fi
 
   echo "$PREVIOUS is healthy. Updating $SERVICE..."
@@ -44,6 +50,12 @@ update_service_if_healthy() {
       echo "$SERVICE is healthy!"
       break
     fi
+
+    if [ "$STATUS" = "unhealthy" ]; then
+      echo "ERROR: $SERVICE failed health check. Aborting deployment."
+      exit 1
+    fi
+
     sleep 2
   done
 }
