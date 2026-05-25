@@ -56,6 +56,9 @@ jobs:
           git fetch --all
           git reset --hard origin/main
 
+          docker compose -f docker-compose.app.yml down
+          docker system prune -a -f
+
           echo "SHA_TAG=$SHA_TAG" > .env.app
 
           docker compose -f docker-compose.app.yml pull
@@ -90,6 +93,10 @@ jobs:
           # Always sync repo with GitHub
           git fetch --all
           git reset --hard origin/main
+
+          # Clean old containers + images
+          docker compose -f docker-compose.proxy.yml down
+          docker system prune -a -f
 
           echo "SHA_TAG=$SHA_TAG" > .env.proxy
           echo "APP_VM_HOST=$APP_VM_HOST" >> .env.proxy
