@@ -87,6 +87,9 @@ jobs:
           
           # Set up nginx config with environment variable substitution
           envsubst '${APP_VM_HOST}' < reverse-proxy/nginx.conf.template > reverse-proxy/nginx.conf
+
+          # Generate Prometheus config
+          envsubst '${APP_VM_HOST}' < monitoring/prometheus.proxy.yml.template > monitoring/prometheus.proxy.yml
           
           docker compose -f docker-compose.proxy.yml pull
           docker compose -f docker-compose.proxy.yml up -d
