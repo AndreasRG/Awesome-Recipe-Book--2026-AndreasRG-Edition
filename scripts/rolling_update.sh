@@ -7,65 +7,94 @@ force_update_service() {
   SERVICE=$1
   echo "FORCE updating $SERVICE..."
 
-  # If the service does not exist or is not running, recreate it using fallback templates
+  # ---------------------------------------------------------
+  # CASE 1: app1 DOES NOT EXIST → skip update, go to recovery
+  # ---------------------------------------------------------
   if ! docker ps -a --format '{{.Names}}' | grep -q "^${SERVICE}$"; then
-    echo "$SERVICE does not exist. Attempting to recreate using fallback templates..."
-
-    TEMPLATE=""
-
-    # Try app3 first
-    if docker ps -a --format '{{.Names}}' | grep -q "^app3$"; then
-      TEMPLATE="app3"
-    # If app3 doesn't exist, try app2
-    elif docker ps -a --format '{{.Names}}' | grep -q "^app2$"; then
-      TEMPLATE="app2"
-    fi
-
-    # If no template exists, abort
-    if [ -z "$TEMPLATE" ]; then
-      echo "ERROR: No template apps exist, manual fix required!"
-      exit 1
-    fi
-
-    echo "Using $TEMPLATE as template for recreating $SERVICE..."
-
-    # Get image from template
-    IMAGE=$(docker inspect --format='{{.Config.Image}}' $TEMPLATE 2>/dev/null)
-
-    if [ -z "$IMAGE" ]; then
-      echo "ERROR: Could not determine image from $TEMPLATE. Aborting."
-      exit 1
-    fi
-
-    echo "Using image: $IMAGE"
-
-    # Recreate the missing service
-    docker compose -f docker-compose.app.yml up -d --no-deps --force-recreate $SERVICE
+    echo "$SERVICE does not exist. Skipping update and attempting recovery..."
+    recover_service_from_templates "$SERVICE"
+    return 1
   fi
 
-  # Now perform the normal forced update
+  # ---------------------------------------------------------
+  # CASE 2: app1 EXISTS → try normal update first
+  # ---------------------------------------------------------
   docker compose -f docker-compose.app.yml up -d --force-recreate --no-deps $SERVICE
 
   echo "Waiting for $SERVICE to become healthy..."
   while true; do
     STATUS=$(docker inspect --format='{{.State.Health.Status}}' $SERVICE 2>/dev/null)
+
     if [ "$STATUS" = "healthy" ]; then
-      echo "$SERVICE is healthy!"
-      break
+      echo "$SERVICE is healthy after normal update!"
+      return 0
     fi
 
     if [ "$STATUS" = "unhealthy" ]; then
-      echo "ERROR: $SERVICE failed health check. Aborting deployment and shutting down unhealthy $SERVICE."
-      docker stop $SERVICE
-      docker rm $SERVICE
+      echo "ERROR: $SERVICE failed health check after normal update."
+      break
+    fi
+
+    sleep 2
+  done
+
+  # ---------------------------------------------------------
+  # CASE 3: Normal update FAILED → recovery mode
+  # ---------------------------------------------------------
+  echo "Aborting rolling update. Attempting to recover $SERVICE from template..."
+  recover_service_from_templates "$SERVICE"
+  return 1
+}
+
+recover_service_from_templates() {
+  SERVICE=$1
+
+  TEMPLATE=""
+
+  # Try app3 first
+  if docker ps -a --format '{{.Names}}' | grep -q "^app3$"; then
+    TEMPLATE="app3"
+  # Then app2
+  elif docker ps -a --format '{{.Names}}' | grep -q "^app2$"; then
+    TEMPLATE="app2"
+  fi
+
+  # No templates available
+  if [ -z "$TEMPLATE" ]; then
+    echo "ERROR: No template apps exist, manual fix required!"
+    docker stop $SERVICE 2>/dev/null || true
+    docker rm $SERVICE 2>/dev/null || true
+    exit 1
+  fi
+
+  echo "Using $TEMPLATE as template to recreate $SERVICE..."
+
+  # Remove broken/missing container
+  docker stop $SERVICE 2>/dev/null || true
+  docker rm $SERVICE 2>/dev/null || true
+
+  # Recreate from compose
+  docker compose -f docker-compose.app.yml up -d --no-deps --force-recreate $SERVICE
+
+  echo "Waiting for recovered $SERVICE to become healthy..."
+  while true; do
+    STATUS=$(docker inspect --format='{{.State.Health.Status}}' $SERVICE 2>/dev/null)
+
+    if [ "$STATUS" = "healthy" ]; then
+      echo "$SERVICE successfully recovered from $TEMPLATE. Rolling update will NOT continue."
+      return 0
+    fi
+
+    if [ "$STATUS" = "unhealthy" ]; then
+      echo "ERROR: $SERVICE failed health check even after recovery from $TEMPLATE. Manual fix required."
+      docker stop $SERVICE 2>/dev/null || true
+      docker rm $SERVICE 2>/dev/null || true
       exit 1
     fi
 
     sleep 2
   done
 }
-
-
 
 update_service_if_healthy() {
   SERVICE=$1
