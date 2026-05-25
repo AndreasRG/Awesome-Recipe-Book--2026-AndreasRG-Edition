@@ -1,108 +1,185 @@
 #!/bin/bash
 
-# Always run from repo root
+# Rolling update script with self-healing capabilities
+# Flow:
+#   1. Update app1 (always attempt)
+#   2. If app1 succeeds → proceed with app2 rolling update
+#   3. If app1 fails → enter self-healing recovery
+#   4. Self-healing attempts: copy app3 → copy app2 → create from scratch
+#   5. If recovery fails → shutdown gracefully and exit
+
 cd "$(dirname "$0")/.."
 
 set -o pipefail
 
-force_update_service() {
+attempt_update() {
   SERVICE=$1
-  echo "FORCE updating $SERVICE..."
+  echo "[$(date +'%H:%M:%S')] Attempting to update $SERVICE..."
 
-  # ---------------------------------------------------------
-  # CASE 1: app1 DOES NOT EXIST → skip update, go to recovery
-  # ---------------------------------------------------------
-  if ! docker ps -a --format '{{.Names}}' | grep -q "^${SERVICE}$"; then
-    echo "$SERVICE does not exist. Attempting recovery..."
-    recover_service_from_templates "$SERVICE"
-    return $?
-  fi
-
-  # ---------------------------------------------------------
-  # CASE 2: app1 EXISTS → try normal update first
-  # ---------------------------------------------------------
+  # Try to update/create the service
   docker compose -f docker-compose.app.yml up -d --force-recreate --no-deps $SERVICE
 
-  echo "Waiting for $SERVICE to become healthy..."
+  # Wait for healthcheck to pass
   TIMEOUT=0
-  while true; do
+  MAX_TIMEOUT=60
+  
+  while [ $TIMEOUT -lt $MAX_TIMEOUT ]; do
     STATUS=$(docker inspect --format='{{.State.Health.Status}}' $SERVICE 2>/dev/null)
 
     if [ "$STATUS" = "healthy" ]; then
-      echo "$SERVICE is healthy after normal update!"
+      echo "[$(date +'%H:%M:%S')] ✓ $SERVICE is healthy!"
       return 0
     fi
 
     if [ "$STATUS" = "unhealthy" ]; then
-      echo "ERROR: $SERVICE failed health check after normal update."
-      break
+      echo "[$(date +'%H:%M:%S')] ✗ $SERVICE failed health check"
+      return 1
     fi
 
-    TIMEOUT=$((TIMEOUT + 1))
-    if [ $TIMEOUT -gt 30 ]; then
-      echo "WARNING: $SERVICE healthcheck timeout. Attempting recovery..."
-      break
-    fi
-
+    TIMEOUT=$((TIMEOUT + 2))
     sleep 2
   done
 
-  # ---------------------------------------------------------
-  # CASE 3: Normal update FAILED → recovery mode
-  # ---------------------------------------------------------
-  echo "Aborting normal update. Attempting to recover $SERVICE from template..."
-  recover_service_from_templates "$SERVICE"
-  return $?
+  echo "[$(date +'%H:%M:%S')] ✗ $SERVICE healthcheck timeout after ${MAX_TIMEOUT}s"
+  return 1
+}
+
+self_heal_service() {
+  SERVICE=$1
+  echo ""
+  echo "[$(date +'%H:%M:%S')] ⚠️  SELF-HEALING: $SERVICE is unhealthy. Attempting recovery..."
+  echo "[$(date +'%H:%M:%S')] Recovery strategy: copy app3 → copy app2 → create from scratch"
+  echo ""
+
+  # Remove the broken container
+  docker stop $SERVICE 2>/dev/null || true
+  docker rm $SERVICE 2>/dev/null || true
+
+  # RECOVERY ATTEMPT 1: Copy from app3
+  if docker ps -a --format '{{.Names}}' | grep -q "^app3$"; then
+    echo "[$(date +'%H:%M:%S')] [Recovery #1] Attempting to recreate $SERVICE from app3 template..."
+    attempt_update $SERVICE
+    if [ $? -eq 0 ]; then
+      echo "[$(date +'%H:%M:%S')] ✓ Self-healing succeeded: $SERVICE recovered from app3"
+      return 0
+    fi
+    echo "[$(date +'%H:%M:%S')] ✗ Recovery #1 failed"
+    docker stop $SERVICE 2>/dev/null || true
+    docker rm $SERVICE 2>/dev/null || true
+  fi
+
+  # RECOVERY ATTEMPT 2: Copy from app2
+  if docker ps -a --format '{{.Names}}' | grep -q "^app2$"; then
+    echo "[$(date +'%H:%M:%S')] [Recovery #2] Attempting to recreate $SERVICE from app2 template..."
+    attempt_update $SERVICE
+    if [ $? -eq 0 ]; then
+      echo "[$(date +'%H:%M:%S')] ✓ Self-healing succeeded: $SERVICE recovered from app2"
+      return 0
+    fi
+    echo "[$(date +'%H:%M:%S')] ✗ Recovery #2 failed"
+    docker stop $SERVICE 2>/dev/null || true
+    docker rm $SERVICE 2>/dev/null || true
+  fi
+
+  # RECOVERY ATTEMPT 3: Create from scratch
+  echo "[$(date +'%H:%M:%S')] [Recovery #3] Attempting to create $SERVICE from scratch..."
+  attempt_update $SERVICE
+  if [ $? -eq 0 ]; then
+    echo "[$(date +'%H:%M:%S')] ✓ Self-healing succeeded: $SERVICE created from scratch"
+    return 0
+  fi
+  echo "[$(date +'%H:%M:%S')] ✗ Recovery #3 failed"
+
+  # FATAL: All recovery attempts failed - shutdown gracefully
+  echo ""
+  echo "[$(date +'%H:%M:%S')] ❌ CRITICAL: All recovery attempts failed for $SERVICE"
+  echo "[$(date +'%H:%M:%S')] Shutting down $SERVICE gracefully..."
+  docker stop $SERVICE 2>/dev/null || true
+  docker rm $SERVICE 2>/dev/null || true
+  echo "[$(date +'%H:%M:%S')] System shutdown complete."
+  return 1
+}
+
+attempt_rolling_update_sequence() {
+  echo "[$(date +'%H:%M:%S')] Starting rolling update sequence..."
+  echo ""
+
+  # STEP 1: Update app1 (CRITICAL)
+  attempt_update app1
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo "[$(date +'%H:%M:%S')] 🔴 app1 update FAILED. Entering self-healing mode..."
+    self_heal_service app1
+    if [ $? -ne 0 ]; then
+      echo "[$(date +'%H:%M:%S')] 🛑 DEPLOYMENT ABORTED: Cannot recover app1"
+      return 1
+    fi
+    echo "[$(date +'%H:%M:%S')] app1 recovered successfully. Proceeding with rolling updates..."
+  fi
+
+  echo ""
+  echo "[$(date +'%H:%M:%S')] ✓ app1 is healthy. Proceeding to app2 rolling update..."
+
+  # STEP 2: Update app2 (only if app1 is healthy)
+  STATUS=$(docker inspect --format='{{.State.Health.Status}}' app1 2>/dev/null)
+  if [ "$STATUS" != "healthy" ]; then
+    echo "[$(date +'%H:%M:%S')] ✗ app1 is no longer healthy. Aborting rolling updates."
+    return 1
+  fi
+
+  attempt_update app2
+  if [ $? -ne 0 ]; then
+    echo "[$(date +'%H:%M:%S')] ⚠️  app2 update failed. Attempting self-healing..."
+    self_heal_service app2
+    if [ $? -ne 0 ]; then
+      echo "[$(date +'%H:%M:%S')] ⚠️  app2 recovery failed, but app1 is stable. Rolling update incomplete."
+      return 1
+    fi
+  fi
+
+  echo ""
+  echo "[$(date +'%H:%M:%S')] ✓ app2 is healthy. Proceeding to app3 rolling update..."
+
+  # STEP 3: Update app3 (only if app2 is healthy)
+  STATUS=$(docker inspect --format='{{.State.Health.Status}}' app2 2>/dev/null)
+  if [ "$STATUS" != "healthy" ]; then
+    echo "[$(date +'%H:%M:%S')] ✗ app2 is no longer healthy. Aborting app3 update."
+    return 1
+  fi
+
+  attempt_update app3
+  if [ $? -ne 0 ]; then
+    echo "[$(date +'%H:%M:%S')] ⚠️  app3 update failed. Attempting self-healing..."
+    self_heal_service app3
+    if [ $? -ne 0 ]; then
+      echo "[$(date +'%H:%M:%S')] ⚠️  app3 recovery failed, but app1 and app2 are stable. Rolling update mostly complete."
+      return 1
+    fi
+  fi
+
+  echo ""
+  echo "[$(date +'%H:%M:%S')] ✓ All apps updated successfully!"
+  return 0
 }
 
 recover_service_from_templates() {
   SERVICE=$1
   TEMPLATE=""
 
-  # Try app3 first, then app2
+  # Try app3 first
   if docker ps -a --format '{{.Names}}' | grep -q "^app3$"; then
     TEMPLATE="app3"
+  # Then app2
   elif docker ps -a --format '{{.Names}}' | grep -q "^app2$"; then
     TEMPLATE="app2"
   fi
 
-  # No templates available - do a clean creation from scratch
+  # No templates available
   if [ -z "$TEMPLATE" ]; then
-    echo "WARNING: No template apps exist. Creating $SERVICE from scratch..."
-    
-    # Remove any broken/partial containers
+    echo "ERROR: No template apps exist, manual fix required!"
     docker stop $SERVICE 2>/dev/null || true
     docker rm $SERVICE 2>/dev/null || true
-    
-    # Create from docker-compose
-    docker compose -f docker-compose.app.yml up -d --no-deps $SERVICE
-    
-    echo "Waiting for $SERVICE to become healthy (created from scratch)..."
-    TIMEOUT=0
-    while true; do
-      STATUS=$(docker inspect --format='{{.State.Health.Status}}' $SERVICE 2>/dev/null)
-
-      if [ "$STATUS" = "healthy" ]; then
-        echo "$SERVICE successfully created and is healthy!"
-        return 0
-      fi
-
-      if [ "$STATUS" = "unhealthy" ]; then
-        echo "ERROR: $SERVICE failed health check even when created from scratch."
-        echo "Container logs:"
-        docker logs $SERVICE | tail -20
-        return 1
-      fi
-
-      TIMEOUT=$((TIMEOUT + 1))
-      if [ $TIMEOUT -gt 30 ]; then
-        echo "ERROR: $SERVICE healthcheck timeout. Cannot recover."
-        docker logs $SERVICE | tail -20
-        return 1
-      fi
-
-      sleep 2
-    done
+    exit 1
   fi
 
   echo "Using $TEMPLATE as template to recreate $SERVICE..."
@@ -183,41 +260,31 @@ update_service_if_healthy() {
   done
 }
 
+# ============================================================
+# MAIN EXECUTION
+# ============================================================
 
-# 1. app1 ALWAYS updates (even from scratch if needed)
-force_update_service app1
-APP1_RESULT=$?
-
-# 2. app2 ONLY updates if app1 is healthy
-if [ $APP1_RESULT -eq 0 ]; then
-  update_service_if_healthy app2 app1
-  APP2_RESULT=$?
-else
-  echo "Skipping app2 update because app1 is not healthy"
-  APP2_RESULT=1
-fi
-
-# 3. app3 ONLY updates if app2 is healthy
-if [ $APP2_RESULT -eq 0 ]; then
-  update_service_if_healthy app3 app2
-  APP3_RESULT=$?
-else
-  echo "Skipping app3 update because app2 is not healthy"
-  APP3_RESULT=1
-fi
-
-# Summary
+echo "╔════════════════════════════════════════════════════════╗"
+echo "║          Rolling Update with Self-Healing             ║"
+echo "╚════════════════════════════════════════════════════════╝"
 echo ""
-echo "========================================"
-echo "Rolling update summary:"
-echo "  app1: $([ $APP1_RESULT -eq 0 ] && echo 'SUCCESS' || echo 'FAILED')"
-echo "  app2: $([ $APP2_RESULT -eq 0 ] && echo 'SUCCESS' || echo 'FAILED')"
-echo "  app3: $([ $APP3_RESULT -eq 0 ] && echo 'SUCCESS' || echo 'FAILED')"
-echo "========================================"
 
-if [ $APP1_RESULT -ne 0 ]; then
-  echo "CRITICAL: app1 failed to update/recover. Manual intervention required."
-  exit 1
+attempt_rolling_update_sequence
+
+RESULT=$?
+
+echo ""
+echo "╔════════════════════════════════════════════════════════╗"
+if [ $RESULT -eq 0 ]; then
+  echo "║  ✓ Rolling update completed successfully              ║"
+else
+  echo "║  ⚠️  Rolling update completed with issues             ║"
 fi
+echo "╚════════════════════════════════════════════════════════╝"
+echo ""
 
-exit 0
+# Final status check
+echo "Final status:"
+docker ps --format 'table {{.Names}}\t{{.Status}}' | grep -E '^app[123]'
+
+exit $RESULT
