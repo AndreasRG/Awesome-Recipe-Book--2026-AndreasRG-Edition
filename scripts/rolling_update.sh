@@ -21,7 +21,7 @@ attempt_update() {
 
   # Wait for healthcheck to pass
   TIMEOUT=0
-  MAX_TIMEOUT=60
+  MAX_TIMEOUT=90
   
   while [ $TIMEOUT -lt $MAX_TIMEOUT ]; do
     STATUS=$(docker inspect --format='{{.State.Health.Status}}' $SERVICE 2>/dev/null)
@@ -33,6 +33,8 @@ attempt_update() {
 
     if [ "$STATUS" = "unhealthy" ]; then
       echo "[$(date +'%H:%M:%S')] ✗ $SERVICE failed health check"
+      echo "[$(date +'%H:%M:%S')] Container logs:"
+      docker logs $SERVICE 2>&1 | tail -30
       return 1
     fi
 
@@ -41,6 +43,8 @@ attempt_update() {
   done
 
   echo "[$(date +'%H:%M:%S')] ✗ $SERVICE healthcheck timeout after ${MAX_TIMEOUT}s"
+  echo "[$(date +'%H:%M:%S')] Container logs:"
+  docker logs $SERVICE 2>&1 | tail -30
   return 1
 }
 

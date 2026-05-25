@@ -24,7 +24,7 @@ services:
       interval: 5s
       timeout: 2s
       retries: 10
-      start_period: 30s
+      start_period: 60s
 
   app2:
     image: ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
@@ -43,7 +43,7 @@ services:
       interval: 5s
       timeout: 2s
       retries: 10
-      start_period: 30s
+      start_period: 60s
 
   app3:
     image: ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
@@ -62,7 +62,7 @@ services:
       interval: 5s
       timeout: 2s
       retries: 10
-      start_period: 30s
+      start_period: 60s
 
 # Node exporter for host metrics (monitored by Proxy VM Prometheus)
   node-exporter-app:
