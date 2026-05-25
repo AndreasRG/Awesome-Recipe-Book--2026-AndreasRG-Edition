@@ -2,12 +2,13 @@
 # Imports
 # ---------------------------------------------------------
 
-from database import get_db_session
 from fastapi import APIRouter, Depends, HTTPException
-from metrics import LOGIN_ATTEMPTS_TOTAL, USER_SIGNUPS_TOTAL
-from schemas import TokenCreate, UserCreate, UserUpdate
-from services.users import authenticate_user, create_user
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_db_session
+from app.metrics import LOGIN_ATTEMPTS_TOTAL, USER_SIGNUPS_TOTAL
+from app.schemas import TokenCreate, UserCreate, UserUpdate
+from app.services.users import authenticate_user, create_user
 
 # ---------------------------------------------------------
 # User API (ORM)
