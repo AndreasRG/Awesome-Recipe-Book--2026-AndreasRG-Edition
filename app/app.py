@@ -30,10 +30,10 @@ app = FastAPI(title="Recipe API (FastAPI ORM)")
 Instrumentator().instrument(app).expose(app)
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Templates (used by pages router)
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 
 # ---------------------------------------------------------
