@@ -18,7 +18,9 @@ force_update_service() {
     fi
 
     if [ "$STATUS" = "unhealthy" ]; then
-      echo "ERROR: $SERVICE failed health check. Aborting deployment."
+      echo "ERROR: $SERVICE failed health check. Aborting deployment and shutting down unhealthy $SERVICE."
+      docker stop $SERVICE
+      docker rm $SERVICE
       exit 1
     fi
 
@@ -52,7 +54,9 @@ update_service_if_healthy() {
     fi
 
     if [ "$STATUS" = "unhealthy" ]; then
-      echo "ERROR: $SERVICE failed health check. Aborting deployment."
+      echo "ERROR: $SERVICE failed health check. Aborting deployment and shutting down unhealthy $SERVICE."
+      docker stop $SERVICE
+      docker rm $SERVICE
       exit 1
     fi
 
