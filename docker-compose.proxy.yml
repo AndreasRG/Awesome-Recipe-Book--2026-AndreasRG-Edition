@@ -49,10 +49,23 @@ services:
   node-exporter-proxy:
     image: prom/node-exporter:latest
     container_name: node-exporter-proxy
-    pid: host
-    network_mode: host
-    privileged: true
+    ports:
+    - "9100:9100"
     restart: unless-stopped
+    networks:
+    - proxy-network
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-exporter
+    command:
+      - "-nginx.scrape-uri=http://reverse-proxy/stub_status"
+    ports:
+      - "9113:9113"
+    restart: unless-stopped
+    networks:
+      - proxy-network
+
 
 networks:
   proxy-network:
