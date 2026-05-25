@@ -117,6 +117,8 @@ Generate the nginx config from the template:
 APP_VM_HOST=<IP_OF_APP_VM> envsubst '${APP_VM_HOST}' < reverse-proxy/nginx.conf.template > reverse-proxy/nginx.conf
 ```
 
+**Note:** The template automatically uses ports 5001, 5002, 5003 for load balancing across the 3 app instances.
+
 Then start the containers:
 ```bash
 docker compose -f docker-compose.proxy.yml pull

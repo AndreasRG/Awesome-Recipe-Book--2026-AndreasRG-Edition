@@ -1,7 +1,6 @@
 # Nginx configuration template
 # Environment variables are substituted at runtime:
 # - APP_VM_HOST: The hostname or IP of the App VM
-# - APP_VM_PORT: The port the app is listening on (default 5000)
 
 user nginx;
 worker_processes auto;
@@ -30,9 +29,11 @@ http {
     types_hash_max_size 2048;
     client_max_body_size 20M;
 
-    # Upstream to the app VM instances
+    # Upstream to the app VM instances with load balancing
     upstream app_backend {
-        server ${APP_VM_HOST}:${APP_VM_PORT};
+        server ${APP_VM_HOST}:5001 max_fails=2 fail_timeout=10s;
+        server ${APP_VM_HOST}:5002 max_fails=2 fail_timeout=10s;
+        server ${APP_VM_HOST}:5003 max_fails=2 fail_timeout=10s;
     }
 
     # Redirect HTTP to HTTPS (optional - uncomment if using HTTPS)

@@ -34,7 +34,6 @@ echo ""
 # Generate nginx config from template
 echo "Generating nginx.conf from template..."
 export APP_VM_HOST
-export APP_VM_PORT=${APP_VM_PORT:-5000}
 
 envsubst '${APP_VM_HOST}' < reverse-proxy/nginx.conf.template > reverse-proxy/nginx.conf
 
