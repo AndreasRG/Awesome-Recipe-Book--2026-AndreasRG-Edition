@@ -23,6 +23,8 @@ scrape_configs:
   - job_name: 'node-exporter-proxy'
     static_configs:
     - targets: ['27.0.0.5:9100']
+      labels:
+        instance: 'proxy-vm'
 
 
   # Node exporter on App VM (host metrics)
