@@ -79,7 +79,7 @@ async def api_overview():
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "unhealthy"}
 
 
 # ---------------------------------------------------------
