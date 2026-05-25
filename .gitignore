@@ -3,3 +3,7 @@ __pycache__
 source/
 app.db
 .env
+reverse-proxy/nginx.conf
+monitoring/prometheus.proxy.yml
+.env.proxy
+.env.app
