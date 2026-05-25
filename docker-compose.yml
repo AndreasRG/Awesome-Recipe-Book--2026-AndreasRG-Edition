@@ -7,14 +7,12 @@ services:
     expose:
       - "5000"
     restart: unless-stopped
-
   app2:
     image: ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
     container_name: app2
     expose:
       - "5000"
     restart: unless-stopped
-
   app3:
     image: ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
     container_name: app3
