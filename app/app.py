@@ -38,8 +38,6 @@ def health():
 # Example usage:
 # db_url = os.getenv("DATABASE_URL")
 
-# Enable Prometheus metrics
-Instrumentator().instrument(app).expose(app)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -55,6 +53,9 @@ templates = Jinja2Templates(directory="app/templates")
 app.include_router(pages.router)
 app.include_router(recipes.router)
 app.include_router(users.router)
+
+# Enable Prometheus metrics
+Instrumentator().instrument(app).expose(app)
 
 
 # ---------------------------------------------------------
