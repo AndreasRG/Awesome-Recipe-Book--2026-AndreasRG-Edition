@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Always run from repo root
+cd "$(dirname "$0")/.."
+
+
 update_service() {
   SERVICE=$1
   echo "Updating $SERVICE..."
