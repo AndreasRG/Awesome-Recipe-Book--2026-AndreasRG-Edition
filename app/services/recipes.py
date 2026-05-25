@@ -2,10 +2,11 @@
 # Imports
 # ---------------------------------------------------------
 
-from models import Ingredient, Recipe, Tag
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
+from app.models import Ingredient, Recipe, Tag
 
 # ---------------------------------------------------------
 # Recipe Service Logic
