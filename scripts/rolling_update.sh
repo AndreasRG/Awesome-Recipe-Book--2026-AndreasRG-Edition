@@ -64,6 +64,11 @@ update_service_if_healthy() {
   done
 }
 
+
+echo "Ensuring all services exist before rolling update..."
+docker compose -f docker-compose.app.yml up -d
+
+
 # 1. app1 ALWAYS updates
 force_update_service app1
 
