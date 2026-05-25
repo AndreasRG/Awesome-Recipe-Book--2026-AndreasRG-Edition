@@ -4,6 +4,7 @@
 
 from database import get_db_session
 from fastapi import APIRouter, Depends, HTTPException
+from metrics import RECIPE_VIEWS_TOTAL, RECIPES_CREATED_TOTAL
 from schemas import RecipeCreate
 from services.recipes import create_recipe, get_recipe, list_recipes
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +26,9 @@ async def recipe_detail_route(id: int, db: AsyncSession = Depends(get_db_session
     recipe = await get_recipe(db, id)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
+
+    RECIPE_VIEWS_TOTAL.inc()
+
     return recipe
 
 
@@ -33,4 +37,7 @@ async def recipe_create_route(
     data: RecipeCreate, db: AsyncSession = Depends(get_db_session)
 ):
     recipe = await create_recipe(db, data)
+
+    RECIPES_CREATED_TOTAL.inc()
+
     return {"id": recipe.id}

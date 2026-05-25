@@ -4,6 +4,7 @@
 
 from database import get_db_session
 from fastapi import APIRouter, Depends, HTTPException
+from metrics import LOGIN_ATTEMPTS_TOTAL, USER_SIGNUPS_TOTAL
 from schemas import TokenCreate, UserCreate, UserUpdate
 from services.users import authenticate_user, create_user
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +22,7 @@ async def user_create_route(
 ):
     try:
         user = await create_user(db, data)
+        USER_SIGNUPS_TOTAL.inc()
         return {"id": user.id, "email": user.email, "name": user.name}
     except Exception as err:
         raise HTTPException(status_code=400, detail="Email already exists") from err
@@ -51,6 +53,8 @@ async def user_me_partial_update_route(data: UserUpdate):
 async def user_token_route(
     data: TokenCreate, db: AsyncSession = Depends(get_db_session)
 ):
+    LOGIN_ATTEMPTS_TOTAL.inc()
+
     user = await authenticate_user(db, data.email, data.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
