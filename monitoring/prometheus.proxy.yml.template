@@ -37,15 +37,22 @@ scrape_configs:
         replacement: 'app-vm'
 
   # Application instances (FastAPI /metrics endpoints)
-  - job_name: 'app-instances'
-    metrics_path: '/metrics'
-    static_configs:
-      - targets: 
-          - '${APP_VM_HOST}:5001'
-          - '${APP_VM_HOST}:5002'
-          - '${APP_VM_HOST}:5003'
+    - job_name: 'app-instances'
+      metrics_path: '/metrics'
+      static_configs:
+      - targets:
+          - '131.163.81.147:5001'
         labels:
-          group: 'app-instances'
+          app: 'App1'
+      - targets:
+          - '131.163.81.147:5002'
+        labels:
+          app: 'App2'
+      - targets:
+          - '131.163.81.147:5003'
+        labels:
+          app: 'App3'
+
   
   # Prometheus itself
   - job_name: 'prometheus'
