@@ -15,13 +15,13 @@ global:
 scrape_configs:
   # Reverse proxy nginx metrics (stub status)
   - job_name: 'nginx-proxy'
-  static_configs:
+    static_configs:
     - targets: ['localhost:9113']
 
 
   # Node exporter on Proxy VM (host metrics)
   - job_name: 'node-exporter-proxy'
-  static_configs:
+    static_configs:
     - targets: ['27.0.0.5:9100']
 
 
