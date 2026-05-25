@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,18 +30,67 @@ jobs:
         docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${{ env.SHA_TAG }}
         docker push ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:latest
 
-    - name: Deploy to Azure VM
+  deploy-app-vm:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Extract short SHA
+      run: echo "SHA_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+    - name: Deploy to APP VM
       uses: appleboy/ssh-action@v1.0.3
       env:
         SHA_TAG: ${{ env.SHA_TAG }}
       with:
-        host: ${{ secrets.VM_HOST }}
-        username: ${{ secrets.VM_USER }}
+        host: ${{ secrets.APP_VM_HOST }}
+        username: ${{ secrets.APP_VM_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        envs: SHA_TAG # 👈 THIS IS THE CRITICAL ADDITION. It tells the action to pass SHA_TAG over SSH.
+        envs: SHA_TAG
         script: |
           cd ~/Awesome-Recipe-Book--2026-AndreasRG-Edition
-          echo "SHA_TAG=$SHA_TAG" > .env
-          docker compose pull
-          docker compose up -d
+          echo "SHA_TAG=$SHA_TAG" > .env.app
+          docker compose -f docker-compose.app.yml pull
+          docker compose -f docker-compose.app.yml up -d
+          docker image prune -f
+
+  deploy-proxy-vm:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Extract short SHA
+      run: echo "SHA_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+    - name: Deploy to PROXY VM
+      uses: appleboy/ssh-action@v1.0.3
+      env:
+        SHA_TAG: ${{ env.SHA_TAG }}
+        APP_VM_HOST: ${{ secrets.APP_VM_HOST }}
+        GRAFANA_PASSWORD: ${{ secrets.GRAFANA_PASSWORD }}
+      with:
+        host: ${{ secrets.PROXY_VM_HOST }}
+        username: ${{ secrets.PROXY_VM_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        envs: SHA_TAG,APP_VM_HOST,GRAFANA_PASSWORD
+        script: |
+          cd ~/Awesome-Recipe-Book--2026-AndreasRG-Edition
+          echo "SHA_TAG=$SHA_TAG" > .env.proxy
+          echo "APP_VM_HOST=$APP_VM_HOST" >> .env.proxy
+          echo "GRAFANA_PASSWORD=$GRAFANA_PASSWORD" >> .env.proxy
+          
+          # Set up nginx config with environment variable substitution
+          envsubst '${APP_VM_HOST}' < reverse-proxy/nginx.conf.template > reverse-proxy/nginx.conf
+
+          # Generate Prometheus config
+          envsubst '${APP_VM_HOST}' < monitoring/prometheus.proxy.yml.template > monitoring/prometheus.proxy.yml
+          
+          docker compose -f docker-compose.proxy.yml pull
+          docker compose -f docker-compose.proxy.yml up -d
           docker image prune -f

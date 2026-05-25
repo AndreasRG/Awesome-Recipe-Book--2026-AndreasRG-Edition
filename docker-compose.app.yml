@@ -1,0 +1,62 @@
+version: '3.8'
+
+# Docker Compose for APP VM
+# This VM runs only the application instances
+# Monitoring is centralized on the Proxy VM
+
+services:
+
+# Application instances - Load balanced by proxy VM
+  app1:
+    image: ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
+    container_name: app1
+    expose:
+      - "5000"
+    ports:
+      - "5001:5000"
+    restart: unless-stopped
+    networks:
+      - app-network
+    environment:
+      - APP_INSTANCE=app1
+
+  app2:
+    image: ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
+    container_name: app2
+    expose:
+      - "5000"
+    ports:
+      - "5002:5000"
+    restart: unless-stopped
+    networks:
+      - app-network
+    environment:
+      - APP_INSTANCE=app2
+
+  app3:
+    image: ghcr.io/andreasrg/awesome-recipe-book--2026-andreasrg-edition:${SHA_TAG}
+    container_name: app3
+    expose:
+      - "5000"
+    ports:
+      - "5003:5000"
+    restart: unless-stopped
+    networks:
+      - app-network
+    environment:
+      - APP_INSTANCE=app3
+
+# Node exporter for host metrics (monitored by Proxy VM Prometheus)
+  node-exporter-app:
+    image: prom/node-exporter:latest
+    container_name: node-exporter-app
+    pid: host
+    network_mode: host
+    privileged: true
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+
+networks:
+  app-network:
+    driver: bridge

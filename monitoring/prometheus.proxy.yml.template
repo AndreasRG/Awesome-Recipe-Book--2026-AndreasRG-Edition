@@ -1,0 +1,51 @@
+# Prometheus configuration for PROXY VM
+# Centralized monitoring for both VMs
+# Scrapes metrics from:
+# - nginx reverse proxy
+# - both VM node exporters (host metrics)
+# - all application instances
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'centralized-monitoring'
+    environment: 'production'
+
+scrape_configs:
+  # Reverse proxy nginx metrics (stub status)
+  - job_name: 'nginx-proxy'
+    static_configs:
+      - targets: ['localhost:80']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Node exporter on Proxy VM (host metrics)
+  - job_name: 'node-exporter-proxy'
+    static_configs:
+      - targets: ['localhost:9100']
+
+  # Node exporter on App VM (host metrics)
+  - job_name: 'node-exporter-app'
+    static_configs:
+      - targets: ['${APP_VM_HOST}:9100']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'app-vm'
+
+  # Application instances (FastAPI /metrics endpoints)
+  - job_name: 'app-instances'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: 
+          - '${APP_VM_HOST}:5001'
+          - '${APP_VM_HOST}:5002'
+          - '${APP_VM_HOST}:5003'
+        labels:
+          group: 'app-instances'
+  
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
