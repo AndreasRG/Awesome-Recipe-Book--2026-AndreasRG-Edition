@@ -8,7 +8,7 @@ import uvicorn
 from database import init_db
 
 # from app.dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI  # , HTTPException <------------- For testing unhealthy app
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -79,7 +79,8 @@ async def api_overview():
 
 @app.get("/health")
 def health():
-    raise HTTPException(status_code=500, detail="Intentional unhealthy state")
+    return {"status": "ok"}
+    # raise HTTPException(status_code=500, detail="Intentional unhealthy state") <------------- For testing unhealthy app
 
 
 # ---------------------------------------------------------
