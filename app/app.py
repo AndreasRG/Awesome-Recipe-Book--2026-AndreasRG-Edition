@@ -5,14 +5,15 @@
 import asyncio
 
 import uvicorn
-from database import init_db
 
 # from app.dotenv import load_dotenv
 from fastapi import FastAPI  # , HTTPException <------------- For testing unhealthy app
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from prometheus_fastapi_instrumentator import Instrumentator
-from routers import pages, recipes, users
+
+from app.database import init_db
+from app.routers import pages, recipes, users
 
 # ---------------------------------------------------------
 # App setup
