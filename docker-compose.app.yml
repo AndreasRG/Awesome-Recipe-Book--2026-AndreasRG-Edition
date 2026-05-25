@@ -20,7 +20,7 @@ services:
     environment:
       - APP_INSTANCE=app1
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 5s
       timeout: 2s
       retries: 10
@@ -38,7 +38,7 @@ services:
     environment:
       - APP_INSTANCE=app2
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 5s
       timeout: 2s
       retries: 10
@@ -56,7 +56,7 @@ services:
     environment:
       - APP_INSTANCE=app3
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 5s
       timeout: 2s
       retries: 10
