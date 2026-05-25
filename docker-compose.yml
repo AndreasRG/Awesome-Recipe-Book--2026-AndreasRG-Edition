@@ -1,4 +1,19 @@
+version: '3.8'
+
+# ⚠️  DEPRECATED - This file is now split into separate files for 2-VM architecture
+# 
+# Please use instead:
+#   - docker-compose.app.yml   (for App VM)
+#   - docker-compose.proxy.yml (for Proxy VM)
+#
+# For setup instructions, see: DEPLOYMENT_2VM_SETUP.md
+#
+# This file is kept for reference only. It represents the old single-VM architecture.
+
 services:
+
+# ❌ THIS CONFIGURATION IS NO LONGER USED ❌
+# The content below is legacy and should NOT be deployed
 
 # Application instances
   app1:

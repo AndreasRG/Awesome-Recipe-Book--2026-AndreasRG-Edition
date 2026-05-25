@@ -1,0 +1,40 @@
+# Prometheus configuration for APP VM
+# Scrapes metrics from application instances and node exporter
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'app-vm'
+    environment: 'production'
+
+scrape_configs:
+  # Application instances (FastAPI /metrics endpoints)
+  - job_name: 'app-instances'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: 
+          - 'app1:5000'
+          - 'app2:5000'
+          - 'app3:5000'
+        labels:
+          group: 'app-instances'
+
+  # Node exporter on app VM (host metrics)
+  - job_name: 'node-exporter-app'
+    static_configs:
+      - targets: ['localhost:9100']
+
+  # Prometheus itself
+  - job_name: 'prometheus-app'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Remote proxy VM metrics (scraped via node exporter)
+  - job_name: 'proxy-vm-metrics'
+    static_configs:
+      - targets: ['${PROXY_VM_HOST}:9100']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'proxy-vm'
