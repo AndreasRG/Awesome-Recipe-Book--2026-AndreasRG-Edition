@@ -21,6 +21,18 @@ from app.routers import pages, recipes, users
 
 app = FastAPI(title="Recipe API (FastAPI ORM)")
 
+
+# ---------------------------------------------------------
+# Helth Check Endpoint
+# ---------------------------------------------------------
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+    # raise HTTPException(status_code=500, detail="Intentional unhealthy state") <------------- For testing unhealthy app
+
+
 # load_dotenv()
 
 # Example usage:
@@ -71,17 +83,6 @@ async def api_overview():
         "ingredients_url": "/api/recipe/ingredients/",
         "tags_url": "/api/recipe/tags/",
     }
-
-
-# ---------------------------------------------------------
-# Helth Check Endpoint
-# ---------------------------------------------------------
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-    # raise HTTPException(status_code=500, detail="Intentional unhealthy state") <------------- For testing unhealthy app
 
 
 # ---------------------------------------------------------
