@@ -5,15 +5,13 @@
 import asyncio
 
 import uvicorn
-
-# from app.dotenv import load_dotenv
-from fastapi import FastAPI  # , HTTPException <------------- For testing unhealthy app
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.database import init_db
-from app.routers import pages, recipes, users
+from app.routers import pages, recipes, users  # <-- MOVED TO TOP (fixes E402)
 
 # ---------------------------------------------------------
 # App setup
@@ -21,30 +19,24 @@ from app.routers import pages, recipes, users
 
 app = FastAPI(title="Recipe API (FastAPI ORM)")
 
+# Templates (used by pages router)
+templates = Jinja2Templates(directory="app/templates")
 
 # ---------------------------------------------------------
-# Helth Check Endpoint
+# Health Check Endpoint
 # ---------------------------------------------------------
 
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
-    # raise HTTPException(status_code=500, detail="Intentional unhealthy state") <------------- For testing unhealthy app
 
 
-# load_dotenv()
+# ---------------------------------------------------------
+# Static files
+# ---------------------------------------------------------
 
-# Example usage:
-# db_url = os.getenv("DATABASE_URL")
-
-
-# Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
-# Templates (used by pages router)
-templates = Jinja2Templates(directory="app/templates")
-
 
 # ---------------------------------------------------------
 # Include Routers
@@ -56,7 +48,6 @@ app.include_router(users.router)
 
 # Enable Prometheus metrics
 Instrumentator().instrument(app).expose(app)
-
 
 # ---------------------------------------------------------
 # Startup: Create tables
