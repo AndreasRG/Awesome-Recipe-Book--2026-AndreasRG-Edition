@@ -2,15 +2,14 @@ version: '3.8'
 
 # Docker Compose for PROXY VM - BLUE deployment
 # This is the blue service in the blue-green deployment strategy
-# This service has external port bindings (80/443)
+# IMPORTANT: No port bindings here. Ports are added dynamically during promotion.
 
 services:
 
   reverse-proxy-blue:
     image: nginx:latest
     container_name: reverse-proxy-blue
-    ports:
-      - "80:80"
+    # NO PORTS HERE
     volumes:
       - ./reverse-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:
