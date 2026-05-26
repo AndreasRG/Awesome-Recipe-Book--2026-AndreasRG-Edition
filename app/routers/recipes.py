@@ -9,15 +9,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_login
 from app.database import get_db_session
-from app.dependencies import inject_user
+from app.dependencies import get_current_user, inject_user
 from app.metrics import RECIPE_VIEWS_TOTAL, RECIPES_CREATED_TOTAL
+from app.models import User
 from app.schemas import RecipeCreate
 from app.services.recipes import (
     create_recipe,
     get_recipe,
     list_recipes,
 )
-from app.services.users import User, get_current_user
 
 templates = Jinja2Templates(
     directory="app/templates", dependencies=[Depends(inject_user)]
