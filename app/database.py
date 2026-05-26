@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Use DATABASE_URL from environment (recommended)
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql+asyncpg://recipe_user:admin123@27.0.0.6/recipe_db"
+    "DATABASE_URL", "postgresql+asyncpg://recipe_user:admin123@27.0.0.6:5432/recipe_db"
 )
 
 # Create async engine
