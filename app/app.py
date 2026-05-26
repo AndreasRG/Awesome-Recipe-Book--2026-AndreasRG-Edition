@@ -45,9 +45,16 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Include Routers
 # ---------------------------------------------------------
 
+# Pages router (home + recipe detail)
 app.include_router(pages.router)
-app.include_router(recipes.router)
-app.include_router(users.router)
+
+# Recipes routers
+app.include_router(recipes.api)
+app.include_router(recipes.pages)
+
+# Users routers
+app.include_router(users.api)
+app.include_router(users.pages)
 
 # Prometheus
 Instrumentator().instrument(app).expose(app)
