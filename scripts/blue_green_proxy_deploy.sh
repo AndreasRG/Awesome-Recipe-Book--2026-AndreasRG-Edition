@@ -117,6 +117,16 @@ deploy_blue_green() {
     log_info "Current active color: $active"
     log_info "Starting deployment to $inactive..."
 
+
+    # ---------------------------------------------------------
+    # PRE-FLIGHT CHECK: ensure port 80 is free
+    # ---------------------------------------------------------
+    if sudo lsof -i :80 >/dev/null; then
+    log_warn "Port 80 is in use by a ghost process. Cleaning up..."
+    sudo kill -9 $(sudo lsof -t -i :80)
+    fi
+
+
     # Step 1: Start the inactive color without port bindings
     log_info "Step 1: Starting $inactive service (staging)..."
 
