@@ -124,3 +124,11 @@ async def signup_submit(
 
     response = RedirectResponse("/auth/login", status_code=302)
     return response
+
+
+@pages.get("/logout")
+async def logout():
+    """Logout user by clearing the user_id cookie."""
+    response = RedirectResponse("/", status_code=302)
+    response.delete_cookie("user_id")
+    return response

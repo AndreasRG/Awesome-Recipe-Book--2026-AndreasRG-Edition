@@ -1,9 +1,8 @@
-from fastapi.responses import RedirectResponse
-
-
 def require_login(request):
-    """Redirect to login page if user is not authenticated."""
+    """Check if user is logged in. Return None if logged in, else True if not."""
     user_id = request.cookies.get("user_id")
     if not user_id:
-        return RedirectResponse("/auth/login", status_code=302)
+        # User is NOT logged in
+        return True
+    # User IS logged in
     return None

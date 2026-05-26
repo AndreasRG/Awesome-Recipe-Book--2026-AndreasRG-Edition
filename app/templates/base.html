@@ -18,12 +18,14 @@
                 <a href="/">Home</a>
                 <a href="/recipes">Recipes</a>
                 {% if request.state.user %}
-                <span>Logged in as {{ request.state.user.name }}</span>
-                <a href="/auth/logout">Logout</a>
+                    <span style="color: #666;">👤 Logged in as <strong>{{ request.state.user.name }}</strong></span>
+                    <a href="/auth/logout">Logout</a>
                 {% else %}
-                <a href="/auth/login">Login</a>
+                    <span style="color: #999;">📭 You are not logged in</span>
+                    <a href="/auth/login">Login</a>
+                    <a href="/auth/signup">Sign Up</a>
                 {% endif %}
-                </nav>
+            </nav>
         </div>
     </header>
 
@@ -33,7 +35,7 @@
 
     <footer class="footer">
         <div class="container">
-            <p>© {{ year }} Awesome Recipe Cookbook</p>
+            <p>© 2026 Awesome Recipe Cookbook</p>
         </div>
     </footer>
 </body>

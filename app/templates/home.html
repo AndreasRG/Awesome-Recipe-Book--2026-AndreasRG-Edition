@@ -5,7 +5,11 @@
 
 <h2 class="page-title">Browse Recipes</h2>
 
+{% if request.state.user %}
 <a href="/recipes/new" class="btn" style="margin-bottom: 20px;">+ Add New Recipe</a>
+{% else %}
+<button class="btn" onclick="showLoginPrompt()" style="margin-bottom: 20px;">+ Add New Recipe</button>
+{% endif %}
 
 <div class="recipe-grid">
     {% for recipe in recipes %}
@@ -30,5 +34,12 @@
 {% if not recipes %}
 <p class="empty-message">No recipes found.</p>
 {% endif %}
+
+<script>
+function showLoginPrompt() {
+    alert("You must be logged in to add a recipe. Please log in first!");
+    window.location.href = "/auth/login";
+}
+</script>
 
 {% endblock %}
