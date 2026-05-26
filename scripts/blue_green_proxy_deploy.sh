@@ -135,9 +135,9 @@ deploy_blue_green() {
         return 1
     fi
     
-    # Step 3: Switch port bindings (brief downtime window)
-    log_info "Step 3: Switching port bindings..."
-    log_info "  Stopping $active service (port binding)..."
+    # Step 3: Switch port bindings (brief downtime window - HTTP port 80 only)
+    log_info "Step 3: Switching port bindings (port 80)..."
+    log_info "  Stopping $active service (port 80 binding)..."
     
     if [ "$active" = "blue" ]; then
         docker-compose -f "$BLUE_COMPOSE" down
@@ -165,7 +165,6 @@ services:
     container_name: reverse-proxy-green
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ./reverse-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:

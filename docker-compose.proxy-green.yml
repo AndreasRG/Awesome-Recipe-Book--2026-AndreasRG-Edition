@@ -10,7 +10,7 @@ services:
   reverse-proxy-green:
     image: nginx:latest
     container_name: reverse-proxy-green
-    # No port bindings initially - ports will be added when this becomes active
+    # No port bindings initially - port will be added when this becomes active
     volumes:
       - ./reverse-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:

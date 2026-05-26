@@ -116,7 +116,7 @@ jobs:
           docker compose -f docker-compose.proxy-blue.yml pull
           docker compose -f docker-compose.proxy-green.yml pull
           
-          # Run blue-green deployment script
+          # Run blue-green deployment script (HTTP port 80 only)
           chmod +x scripts/blue_green_proxy_deploy.sh
           ./scripts/blue_green_proxy_deploy.sh
           
