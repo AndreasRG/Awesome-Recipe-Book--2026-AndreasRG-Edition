@@ -4,9 +4,9 @@
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.app import templates
 from app.auth import require_login
 from app.database import get_db_session
 from app.metrics import RECIPE_VIEWS_TOTAL, RECIPES_CREATED_TOTAL
@@ -17,6 +17,8 @@ from app.services.recipes import (
     get_recipe,
     list_recipes,
 )
+
+templates = Jinja2Templates(directory="app/templates")
 
 # ---------------------------------------------------------
 # Recipe API (ORM)

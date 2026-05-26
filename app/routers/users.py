@@ -4,9 +4,9 @@
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.app import templates
 from app.database import get_db_session
 from app.metrics import LOGIN_ATTEMPTS_TOTAL, USER_SIGNUPS_TOTAL
 from app.schemas import TokenCreate, UserCreate, UserUpdate
@@ -16,6 +16,8 @@ from app.services.users import (
     login_user,
     register_user_from_form,
 )
+
+templates = Jinja2Templates(directory="app/templates")
 
 # ---------------------------------------------------------
 # User API (ORM)
