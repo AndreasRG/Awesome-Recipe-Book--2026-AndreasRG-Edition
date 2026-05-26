@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db_session
+from app.dependencies import inject_user
 from app.metrics import LOGIN_ATTEMPTS_TOTAL, USER_SIGNUPS_TOTAL
 from app.schemas import TokenCreate, UserCreate, UserUpdate
 from app.services.users import (
@@ -17,7 +18,9 @@ from app.services.users import (
     register_user_from_form,
 )
 
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(
+    directory="app/templates", dependencies=[Depends(inject_user)]
+)
 
 # ---------------------------------------------------------
 # User API (ORM)

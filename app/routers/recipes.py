@@ -2,23 +2,26 @@
 # Imports
 # ---------------------------------------------------------
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_login
 from app.database import get_db_session
+from app.dependencies import inject_user
 from app.metrics import RECIPE_VIEWS_TOTAL, RECIPES_CREATED_TOTAL
 from app.schemas import RecipeCreate
 from app.services.recipes import (
     create_recipe,
-    create_recipe_from_form,
     get_recipe,
     list_recipes,
 )
+from app.services.users import User, get_current_user
 
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(
+    directory="app/templates", dependencies=[Depends(inject_user)]
+)
 
 # ---------------------------------------------------------
 # Recipe API (ORM)
@@ -68,16 +71,28 @@ async def new_recipe_page(request: Request):
 
 @router.post("/new")
 async def new_recipe_submit(
-    request: Request,
     title: str = Form(...),
     time_minutes: int = Form(...),
-    price: float = Form(...),
-    description: str = Form(...),
+    price: str = Form(...),
+    link: str | None = Form(None),
+    description: str | None = Form(None),
+    image: UploadFile | None = File(None),
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_user),
 ):
-    auth = require_login(request)
-    if auth:
-        return auth
+    data = RecipeCreate(
+        title=title,
+        time_minutes=time_minutes,
+        price=price,
+        link=link,
+        description=description,
+    )
 
-    await create_recipe_from_form(db, title, time_minutes, price, description)
-    return RedirectResponse("/", status_code=302)
+    await create_recipe(
+        db=db,
+        recipe_in=data,
+        user_id=current_user.id,
+        image=image,
+    )
+
+    return RedirectResponse("/recipes", status_code=303)
