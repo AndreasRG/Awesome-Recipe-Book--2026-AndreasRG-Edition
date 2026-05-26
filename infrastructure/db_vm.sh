@@ -1,37 +1,12 @@
 #!/bin/bash
 
-
-
-
-
-
-
-
-
-# NOTE! I set up VM's manually in Azure Portal UI (ClickOps) so this is just a demonstration and documentation 
-# for my VM's. Both are the same, ports are different but I will not be doing those here since they 
-# already exist in Azure! They are both the same config apart from names and ports so I only did one file aswell.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ---------------------------------------------------------
-# Configuration (edit these if needed)
+# Configuration
 # ---------------------------------------------------------
 
 RESOURCE_GROUP="TEST"
 LOCATION="norwayeast"
-VM_NAME="backend-vm"
+VM_NAME="db-vm-1" # Change this if you want to create multiple DB VMs (e.g., db-vm-2 for replicas)
 VM_SIZE="Standard_B2als_v2"
 IMAGE="Ubuntu2404"
 ADMIN_USER="azureuser"
@@ -41,7 +16,7 @@ SUBNET_NAME="backend-subnet"
 NSG_NAME="backend-nsg"
 
 # ---------------------------------------------------------
-# Resource Group
+# Create Resource Group
 # ---------------------------------------------------------
 
 az group create \
@@ -49,7 +24,7 @@ az group create \
   --location $LOCATION
 
 # ---------------------------------------------------------
-# Virtual Network + Subnet
+# Create VNet + Subnet
 # ---------------------------------------------------------
 
 az network vnet create \
@@ -60,30 +35,31 @@ az network vnet create \
   --subnet-prefix 10.0.1.0/24
 
 # ---------------------------------------------------------
-# Network Security Group
+# Create NSG
 # ---------------------------------------------------------
 
 az network nsg create \
   --resource-group $RESOURCE_GROUP \
   --name $NSG_NAME
 
-# Open ports for Nginx or backend
+# Allow Patroni API
 az network nsg rule create \
   --resource-group $RESOURCE_GROUP \
   --nsg-name $NSG_NAME \
-  --name AllowHTTP \
+  --name AllowPatroniAPI \
   --protocol tcp \
   --priority 1000 \
-  --destination-port-range 80 \
+  --destination-port-range 8008 \
   --access allow
 
+# Allow PostgreSQL
 az network nsg rule create \
   --resource-group $RESOURCE_GROUP \
   --nsg-name $NSG_NAME \
-  --name AllowHTTPS \
+  --name AllowPostgres \
   --protocol tcp \
   --priority 1001 \
-  --destination-port-range 443 \
+  --destination-port-range 5432 \
   --access allow
 
 # ---------------------------------------------------------
@@ -104,7 +80,7 @@ az vm create \
   --zone 1
 
 # ---------------------------------------------------------
-# Install Docker + Compose (cloud-init)
+# Install PostgreSQL + Patroni (cloud-init)
 # ---------------------------------------------------------
 
 az vm extension set \
@@ -112,9 +88,63 @@ az vm extension set \
   --vm-name $VM_NAME \
   --publisher Microsoft.Azure.Extensions \
   --name CustomScript \
-  --settings '{
-    "fileUris": [],
-    "commandToExecute": "apt update && apt install -y docker.io docker-compose"
-  }'
+  --settings "{
+    \"commandToExecute\": \"
+      apt update &&
+      apt install -y postgresql-16 postgresql-client-16 python3-pip &&
+      pip install patroni[etcd] &&
+      mkdir -p /etc/patroni &&
+      PRIVATE_IP=$(hostname -I | awk '{print \$1}') &&
+      cat <<EOF > /etc/patroni/patroni.yml
+scope: recipe-cluster
+name: $VM_NAME
 
-echo "VM creation script completed (not executed)."
+restapi:
+  listen: \$PRIVATE_IP:8008
+  connect_address: \$PRIVATE_IP:8008
+
+etcd:
+  host: 10.0.0.4:2379
+
+postgresql:
+  listen: \$PRIVATE_IP:5432
+  connect_address: \$PRIVATE_IP:5432
+  data_dir: /var/lib/postgresql/16/main
+  bin_dir: /usr/lib/postgresql/16/bin
+  authentication:
+    superuser:
+      username: postgres
+      password: admin123
+    replication:
+      username: replicator
+      password: admin123
+  parameters:
+    wal_level: replica
+    hot_standby: on
+
+EOF
+
+      systemctl stop postgresql &&
+      systemctl disable postgresql &&
+      pip install patroni &&
+      cat <<EOF > /etc/systemd/system/patroni.service
+[Unit]
+Description=Patroni PostgreSQL
+After=network.target
+
+[Service]
+User=postgres
+ExecStart=/usr/local/bin/patroni /etc/patroni/patroni.yml
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+      systemctl daemon-reload &&
+      systemctl enable patroni &&
+      systemctl start patroni
+    \"
+  }"
+
+echo "VM + Patroni bootstrap completed."
