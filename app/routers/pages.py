@@ -15,7 +15,7 @@ from app.services.recipes import get_recipe, list_recipes
 
 router = APIRouter(tags=["pages"])
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/")
