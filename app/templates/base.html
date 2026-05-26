@@ -19,9 +19,9 @@
                 <a href="/recipes">Recipes</a>
                 {% if request.state.user %}
                 <span>Logged in as {{ request.state.user.name }}</span>
-                <a href="/logout">Logout</a>
+                <a href="/auth/logout">Logout</a>
                 {% else %}
-                <a href="/login">Login</a>
+                <a href="/auth/login">Login</a>
                 {% endif %}
                 </nav>
         </div>

@@ -11,7 +11,7 @@ from fastapi import (
     Request,
     UploadFile,
 )
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -55,8 +55,9 @@ async def recipe_detail_route(id: int, db: AsyncSession = Depends(get_db_session
 async def recipe_create_route(
     data: RecipeCreate,
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_user),
 ):
-    recipe = await create_recipe(db, data)
+    recipe = await create_recipe(db, data, user_id=current_user.id)
     RECIPES_CREATED_TOTAL.inc()
     return {"id": recipe.id}
 
@@ -81,13 +82,23 @@ async def recipes_page(request: Request, db: AsyncSession = Depends(get_db_sessi
 async def new_recipe_page(request: Request):
     auth = require_login(request)
     if auth:
-        return auth
+        # Return a tiny HTML page that triggers a browser alert + redirect
+        return HTMLResponse(
+            """
+            <script>
+                alert("You are not logged in, please login and try again!");
+                window.location.href = "/auth/login";
+            </script>
+            """,
+            status_code=401,
+        )
 
     return templates.TemplateResponse("new_recipe.html", {"request": request})
 
 
 @pages.post("/new")
 async def new_recipe_submit(
+    request: Request,
     title: str = Form(...),
     time_minutes: int = Form(...),
     price: str = Form(...),
@@ -105,11 +116,22 @@ async def new_recipe_submit(
         description=description,
     )
 
-    await create_recipe(
-        db=db,
-        recipe_in=data,
-        user_id=current_user.id,
-        image=image,
-    )
+    try:
+        await create_recipe(
+            db=db,
+            recipe_in=data,
+            user_id=current_user.id,
+            image=image,
+        )
+    except PermissionError:
+        return HTMLResponse(
+            """
+            <script>
+                alert("You are not logged in, please login and try again!");
+                window.location.href = "/auth/login";
+            </script>
+            """,
+            status_code=401,
+        )
 
     return RedirectResponse("/recipes", status_code=303)
