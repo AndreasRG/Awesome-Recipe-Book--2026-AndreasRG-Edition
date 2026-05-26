@@ -18,15 +18,15 @@ from app.services.users import (
     register_user_from_form,
 )
 
-templates = Jinja2Templates(
-    directory="app/templates", dependencies=[Depends(inject_user)]
-)
+templates = Jinja2Templates(directory="app/templates")
 
 # ---------------------------------------------------------
 # User API (ORM)
 # ---------------------------------------------------------
 
-router = APIRouter(prefix="/api/user", tags=["users"])
+router = APIRouter(
+    prefix="/api/user", tags=["users"], dependencies=[Depends(inject_user)]
+)
 
 
 @router.post("/create/", status_code=201)
@@ -74,7 +74,7 @@ async def user_token_route(
     return {"email": user.email, "token": "placeholder_jwt_token"}
 
 
-router = APIRouter(prefix="/auth")
+router = APIRouter(prefix="/auth", dependencies=[Depends(inject_user)])
 
 
 @router.get("/login")

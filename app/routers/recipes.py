@@ -19,15 +19,15 @@ from app.services.recipes import (
     list_recipes,
 )
 
-templates = Jinja2Templates(
-    directory="app/templates", dependencies=[Depends(inject_user)]
-)
+templates = Jinja2Templates(directory="app/templates")
 
 # ---------------------------------------------------------
 # Recipe API (ORM)
 # ---------------------------------------------------------
 
-router = APIRouter(prefix="/api/recipe/recipes", tags=["recipes"])
+router = APIRouter(
+    prefix="/api/recipe/recipes", tags=["recipes"], dependencies=[Depends(inject_user)]
+)
 
 
 @router.get("/")
@@ -57,7 +57,7 @@ async def recipe_create_route(
     return {"id": recipe.id}
 
 
-router = APIRouter(prefix="/recipes")
+router = APIRouter(prefix="/recipes", dependencies=[Depends(inject_user)])
 
 
 @router.get("/new")

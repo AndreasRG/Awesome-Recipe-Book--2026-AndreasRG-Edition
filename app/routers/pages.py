@@ -14,11 +14,9 @@ from app.services.recipes import get_recipe, list_recipes
 # Home page (HTML)
 # ---------------------------------------------------------
 
-router = APIRouter(tags=["pages"])
+router = APIRouter(tags=["pages"], dependencies=[Depends(inject_user)])
 
-templates = Jinja2Templates(
-    directory="app/templates", dependencies=[Depends(inject_user)]
-)
+templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/")
