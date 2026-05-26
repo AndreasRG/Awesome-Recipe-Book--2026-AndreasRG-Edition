@@ -7,14 +7,13 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db_session
-from app.dependencies import inject_user
 from app.services.recipes import get_recipe, list_recipes
 
 # ---------------------------------------------------------
 # Home page (HTML)
 # ---------------------------------------------------------
 
-router = APIRouter(tags=["pages"], dependencies=[Depends(inject_user)])
+router = APIRouter(tags=["pages"])
 
 templates = Jinja2Templates(directory="app/templates")
 
