@@ -8,7 +8,6 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db_session
-from app.dependencies import inject_user
 from app.metrics import LOGIN_ATTEMPTS_TOTAL, USER_SIGNUPS_TOTAL
 from app.schemas import TokenCreate, UserCreate, UserUpdate
 from app.services.users import (
@@ -21,15 +20,13 @@ from app.services.users import (
 templates = Jinja2Templates(directory="app/templates")
 
 # ---------------------------------------------------------
-# User API (ORM)
+# API ROUTER (JSON)
 # ---------------------------------------------------------
 
-router = APIRouter(
-    prefix="/api/user", tags=["users"], dependencies=[Depends(inject_user)]
-)
+api = APIRouter(prefix="/api/user", tags=["users"])
 
 
-@router.post("/create/", status_code=201)
+@api.post("/create/", status_code=201)
 async def user_create_route(
     data: UserCreate, db: AsyncSession = Depends(get_db_session)
 ):
@@ -41,12 +38,12 @@ async def user_create_route(
         raise HTTPException(status_code=400, detail="Email already exists") from err
 
 
-@router.get("/me/")
+@api.get("/me/")
 async def user_me_route():
     return {"email": "user@example.com", "name": "Example User"}
 
 
-@router.put("/me/")
+@api.put("/me/")
 async def user_me_update_route(data: UserUpdate):
     return {
         "email": data.email or "user@example.com",
@@ -54,7 +51,7 @@ async def user_me_update_route(data: UserUpdate):
     }
 
 
-@router.patch("/me/")
+@api.patch("/me/")
 async def user_me_partial_update_route(data: UserUpdate):
     return {
         "email": data.email or "user@example.com",
@@ -62,7 +59,7 @@ async def user_me_partial_update_route(data: UserUpdate):
     }
 
 
-@router.post("/token/")
+@api.post("/token/")
 async def user_token_route(
     data: TokenCreate, db: AsyncSession = Depends(get_db_session)
 ):
@@ -74,15 +71,19 @@ async def user_token_route(
     return {"email": user.email, "token": "placeholder_jwt_token"}
 
 
-router = APIRouter(prefix="/auth", dependencies=[Depends(inject_user)])
+# ---------------------------------------------------------
+# HTML ROUTER (Pages)
+# ---------------------------------------------------------
+
+pages = APIRouter(prefix="/auth")
 
 
-@router.get("/login")
+@pages.get("/login")
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 
-@router.post("/login")
+@pages.post("/login")
 async def login_submit(
     request: Request,
     email: str = Form(...),
@@ -101,12 +102,12 @@ async def login_submit(
     return response
 
 
-@router.get("/signup")
+@pages.get("/signup")
 async def signup_page(request: Request):
     return templates.TemplateResponse("signup.html", {"request": request})
 
 
-@router.post("/signup")
+@pages.post("/signup")
 async def signup_submit(
     request: Request,
     name: str = Form(...),

@@ -2,7 +2,15 @@
 # Imports
 # ---------------------------------------------------------
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+)
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,45 +30,54 @@ from app.services.recipes import (
 templates = Jinja2Templates(directory="app/templates")
 
 # ---------------------------------------------------------
-# Recipe API (ORM)
+# API ROUTER (JSON)
 # ---------------------------------------------------------
 
-router = APIRouter(
-    prefix="/api/recipe/recipes", tags=["recipes"], dependencies=[Depends(inject_user)]
-)
+api = APIRouter(prefix="/api/recipe/recipes", tags=["recipes"])
 
 
-@router.get("/")
+@api.get("/")
 async def recipe_list_route(db: AsyncSession = Depends(get_db_session)):
     return await list_recipes(db)
 
 
-@router.get("/{id}/")
+@api.get("/{id}/")
 async def recipe_detail_route(id: int, db: AsyncSession = Depends(get_db_session)):
     recipe = await get_recipe(db, id)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
     RECIPE_VIEWS_TOTAL.inc()
-
     return recipe
 
 
-@router.post("/", status_code=201)
+@api.post("/", status_code=201)
 async def recipe_create_route(
-    data: RecipeCreate, db: AsyncSession = Depends(get_db_session)
+    data: RecipeCreate,
+    db: AsyncSession = Depends(get_db_session),
 ):
     recipe = await create_recipe(db, data)
-
     RECIPES_CREATED_TOTAL.inc()
-
     return {"id": recipe.id}
 
 
-router = APIRouter(prefix="/recipes", dependencies=[Depends(inject_user)])
+# ---------------------------------------------------------
+# HTML ROUTER (Pages)
+# ---------------------------------------------------------
+
+pages = APIRouter(prefix="/recipes")
 
 
-@router.get("/new")
+@pages.get("/", dependencies=[Depends(inject_user)])
+async def recipes_page(request: Request, db: AsyncSession = Depends(get_db_session)):
+    recipes = await list_recipes(db)
+    return templates.TemplateResponse(
+        "recipes.html",
+        {"request": request, "recipes": recipes},
+    )
+
+
+@pages.get("/new")
 async def new_recipe_page(request: Request):
     auth = require_login(request)
     if auth:
@@ -69,7 +86,7 @@ async def new_recipe_page(request: Request):
     return templates.TemplateResponse("new_recipe.html", {"request": request})
 
 
-@router.post("/new")
+@pages.post("/new")
 async def new_recipe_submit(
     title: str = Form(...),
     time_minutes: int = Form(...),
