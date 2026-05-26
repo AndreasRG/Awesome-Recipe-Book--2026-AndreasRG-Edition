@@ -2,13 +2,20 @@
 # Imports
 # ---------------------------------------------------------
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db_session
+from app.main import templates
 from app.metrics import LOGIN_ATTEMPTS_TOTAL, USER_SIGNUPS_TOTAL
 from app.schemas import TokenCreate, UserCreate, UserUpdate
-from app.services.users import authenticate_user, create_user
+from app.services.users import (
+    authenticate_user,
+    create_user,
+    login_user,
+    register_user_from_form,
+)
 
 # ---------------------------------------------------------
 # User API (ORM)
@@ -60,3 +67,54 @@ async def user_token_route(
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
     return {"email": user.email, "token": "placeholder_jwt_token"}
+
+
+router = APIRouter(prefix="/auth")
+
+
+@router.get("/login")
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@router.post("/login")
+async def login_submit(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...),
+    db: AsyncSession = Depends(get_db_session),
+):
+    user = await login_user(db, email, password)
+
+    if not user:
+        return templates.TemplateResponse(
+            "login.html", {"request": request, "error": "Invalid email or password"}
+        )
+
+    response = RedirectResponse("/", status_code=302)
+    response.set_cookie("user_id", str(user.id))
+    return response
+
+
+@router.get("/signup")
+async def signup_page(request: Request):
+    return templates.TemplateResponse("signup.html", {"request": request})
+
+
+@router.post("/signup")
+async def signup_submit(
+    request: Request,
+    name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    db: AsyncSession = Depends(get_db_session),
+):
+    try:
+        await register_user_from_form(db, email, password, name)
+    except Exception:
+        return templates.TemplateResponse(
+            "signup.html", {"request": request, "error": "Email already exists"}
+        )
+
+    response = RedirectResponse("/auth/login", status_code=302)
+    return response

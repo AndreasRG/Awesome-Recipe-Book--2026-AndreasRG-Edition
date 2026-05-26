@@ -57,3 +57,16 @@ async def create_recipe(db: AsyncSession, data):
     await db.refresh(new_recipe)
 
     return new_recipe
+
+
+async def create_recipe_from_form(
+    db: AsyncSession, title, time_minutes, price, description
+):
+    data = {
+        "title": title,
+        "time_minutes": time_minutes,
+        "price": price,
+        "description": description,
+        "link": None,
+    }
+    return await create_recipe(db, data)

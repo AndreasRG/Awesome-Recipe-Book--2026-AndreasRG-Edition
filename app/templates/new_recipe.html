@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Add New Recipe{% endblock %}
+
+{% block content %}
+
+<h2 class="page-title">Add New Recipe</h2>
+
+<form method="post" class="form-card">
+
+    <label>Title</label>
+    <input type="text" name="title" required>
+
+    <label>Time (minutes)</label>
+    <input type="number" name="time_minutes" required>
+
+    <label>Price</label>
+    <input type="number" step="0.01" name="price" required>
+
+    <label>Description</label>
+    <textarea name="description" rows="6" required></textarea>
+
+    <button type="submit" class="btn">Create Recipe</button>
+</form>
+
+{% endblock %}
