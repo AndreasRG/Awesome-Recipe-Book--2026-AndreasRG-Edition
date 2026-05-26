@@ -5,6 +5,7 @@ Database configuration module using SQLAlchemy ORM with async support.
 
 import json
 import logging
+import os
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -12,18 +13,20 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 logger = logging.getLogger(__name__)
 
-# SQLite database URL with async driver (aiosqlite)
-DATABASE_URL = "sqlite+aiosqlite:///./app.db"
-
-# Create async engine with connection pooling
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=False,  # Set to True for SQL debugging
-    future=True,
-    pool_pre_ping=True,  # Verify connections before using them
+# Use DATABASE_URL from environment (recommended)
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql+asyncpg://recipe_user:admin123@27.0.0.6/recipe_db"
 )
 
-# Create async session factory
+# Create async engine
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=False,
+    future=True,
+    pool_pre_ping=True,
+)
+
+# Async session factory
 AsyncSessionLocal = sessionmaker(
     engine,
     class_=AsyncSession,
@@ -31,15 +34,12 @@ AsyncSessionLocal = sessionmaker(
     future=True,
 )
 
-# Base class for all ORM models
+# Base ORM class
 Base = declarative_base()
 
 
 async def get_db_session():
-    """
-    Dependency for getting async database session.
-    Used in FastAPI routes for database access.
-    """
+    """Provide a database session to FastAPI routes."""
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -52,97 +52,92 @@ async def get_db_session():
 
 
 async def init_db():
-    """
-    Initialize database by creating all tables defined in ORM models.
-    """
+    """Create tables and seed database."""
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+
         logger.info("Database tables created successfully")
         await seed_database()
+
     except Exception as e:
         logger.error(f"Database initialization error: {str(e)}")
         raise
 
 
 async def seed_database():
-    """
-    Seed the database with test data from JSON file if it's empty.
-    """
-    from app.models import (
-        Ingredient,
-        Recipe,
-        Tag,
-        recipe_ingredients,
-        recipe_tags,
-    )
+    """Seed database with test data if empty."""
+    from app.models import Ingredient, Recipe, Tag, recipe_ingredients, recipe_tags
 
     async with AsyncSessionLocal() as session:
         try:
-            # Check if data already exists
+            # Check if recipes already exist
             result = await session.execute(text("SELECT COUNT(*) FROM recipes"))
             recipe_count = result.scalar()
 
             if recipe_count == 0:
                 logger.info("Seeding database with test data...")
 
-                # Load test data from JSON file
-                with open("app/test_data.json", "r", encoding="utf-8") as f:
+                # Correct path inside Docker
+                json_path = "/app/app/test_data.json"
+
+                with open(json_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
 
-                # Create ingredients
+                # Ingredients
                 ingredients = []
                 for name in data["ingredients"]:
-                    ingredient = Ingredient(name=name)
-                    session.add(ingredient)
-                    ingredients.append(ingredient)
-
-                await session.flush()  # Get IDs
-
-                # Create tags
-                tags = []
-                for name in data["tags"]:
-                    tag = Tag(name=name)
-                    session.add(tag)
-                    tags.append(tag)
+                    obj = Ingredient(name=name)
+                    session.add(obj)
+                    ingredients.append(obj)
 
                 await session.flush()
 
-                # Create recipes
+                # Tags
+                tags = []
+                for name in data["tags"]:
+                    obj = Tag(name=name)
+                    session.add(obj)
+                    tags.append(obj)
+
+                await session.flush()
+
+                # Recipes
                 recipes = []
-                for recipe_data in data["recipes"]:
+                for r in data["recipes"]:
                     recipe = Recipe(
-                        title=recipe_data["title"],
-                        time_minutes=recipe_data["time_minutes"],
-                        price=recipe_data["price"],
-                        link=recipe_data["link"],
-                        description=recipe_data["description"],
+                        title=r["title"],
+                        time_minutes=r["time_minutes"],
+                        price=r["price"],
+                        link=r["link"],
+                        description=r["description"],
                     )
                     session.add(recipe)
                     recipes.append(recipe)
 
-                await session.flush()  # Get recipe IDs
+                await session.flush()
 
-                # Add recipe-ingredient relationships
-                for i, recipe_data in enumerate(data["recipes"]):
+                # Recipe → Ingredients
+                for i, r in enumerate(data["recipes"]):
                     recipe = recipes[i]
-                    for ing_data in recipe_data["ingredients"]:
+                    for ing in r["ingredients"]:
                         await session.execute(
                             recipe_ingredients.insert().values(
                                 recipe_id=recipe.id,
-                                ingredient_id=ingredients[ing_data["index"]].id,
-                                amount=ing_data["amount"],
-                                unit=ing_data["unit"],
+                                ingredient_id=ingredients[ing["index"]].id,
+                                amount=ing["amount"],
+                                unit=ing["unit"],
                             )
                         )
 
-                # Add recipe-tag relationships
-                for i, recipe_data in enumerate(data["recipes"]):
+                # Recipe → Tags
+                for i, r in enumerate(data["recipes"]):
                     recipe = recipes[i]
-                    for tag_idx in recipe_data["tags"]:
+                    for tag_idx in r["tags"]:
                         await session.execute(
                             recipe_tags.insert().values(
-                                recipe_id=recipe.id, tag_id=tags[tag_idx].id
+                                recipe_id=recipe.id,
+                                tag_id=tags[tag_idx].id,
                             )
                         )
 
@@ -156,7 +151,7 @@ async def seed_database():
 
 
 async def close_db():
-    """Close database connection on application shutdown."""
+    """Close database connection on shutdown."""
     try:
         await engine.dispose()
         logger.info("Database connection closed")
