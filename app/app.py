@@ -10,8 +10,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from prometheus_fastapi_instrumentator import Instrumentator
 
+# Import router modules ONLY (Ruff requires imports at top)
+import app.routers.pages as pages
+import app.routers.recipes as recipes
+import app.routers.users as users
 from app.database import init_db
-from app.routers import pages, recipes, users  # <-- MOVED TO TOP (fixes E402)
 
 # ---------------------------------------------------------
 # App setup
@@ -19,11 +22,11 @@ from app.routers import pages, recipes, users  # <-- MOVED TO TOP (fixes E402)
 
 app = FastAPI(title="Recipe API (FastAPI ORM)")
 
-# Templates (used by pages router)
+# Templates must exist BEFORE routers use them
 templates = Jinja2Templates(directory="app/templates")
 
 # ---------------------------------------------------------
-# Health Check Endpoint
+# Health Check
 # ---------------------------------------------------------
 
 
@@ -46,11 +49,11 @@ app.include_router(pages.router)
 app.include_router(recipes.router)
 app.include_router(users.router)
 
-# Enable Prometheus metrics
+# Prometheus
 Instrumentator().instrument(app).expose(app)
 
 # ---------------------------------------------------------
-# Startup: Create tables
+# Startup
 # ---------------------------------------------------------
 
 
@@ -78,7 +81,7 @@ async def api_overview():
 
 
 # ---------------------------------------------------------
-# Run with python app.py
+# Run
 # ---------------------------------------------------------
 
 if __name__ == "__main__":
