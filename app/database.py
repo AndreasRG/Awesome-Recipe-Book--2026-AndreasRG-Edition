@@ -79,7 +79,7 @@ async def seed_database():
                 logger.info("Seeding database with test data...")
 
                 # Correct path inside Docker
-                json_path = "/app/app/test_data.json"
+                json_path = os.path.join(os.path.dirname(__file__), "test_data.json")
 
                 with open(json_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
