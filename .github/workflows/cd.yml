@@ -78,7 +78,7 @@ jobs:
     - name: Extract short SHA
       run: echo "SHA_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-    - name: Deploy to PROXY VM
+    - name: Deploy to PROXY VM (Blue-Green Strategy)
       uses: appleboy/ssh-action@v1.0.3
       env:
         SHA_TAG: ${{ env.SHA_TAG }}
@@ -96,10 +96,7 @@ jobs:
           git fetch --all
           git reset --hard origin/main
 
-          # Clean old containers + images
-          docker compose -f docker-compose.proxy.yml down
-          docker system prune -a -f
-
+          # Prepare environment variables
           echo "SHA_TAG=$SHA_TAG" > .env.proxy
           echo "APP_VM_HOST=$APP_VM_HOST" >> .env.proxy
           echo "GRAFANA_PASSWORD=$GRAFANA_PASSWORD" >> .env.proxy
@@ -110,6 +107,19 @@ jobs:
           # Generate Prometheus config
           envsubst '${APP_VM_HOST}' < monitoring/prometheus.proxy.yml.template > monitoring/prometheus.proxy.yml
           
-          docker compose -f docker-compose.proxy.yml pull
-          docker compose -f docker-compose.proxy.yml up -d
-          docker image prune -f
+          # Initialize state file if it doesn't exist (default to blue)
+          if [ ! -f .active-proxy ]; then
+            echo "blue" > .active-proxy
+          fi
+          
+          # Pull latest images for both blue and green services
+          docker compose -f docker-compose.proxy-blue.yml pull
+          docker compose -f docker-compose.proxy-green.yml pull
+          
+          # Run blue-green deployment script (HTTP port 80 only)
+          chmod +x scripts/blue_green_proxy_deploy.sh
+          ./scripts/blue_green_proxy_deploy.sh
+          
+          # Clean up unused images and containers
+          docker image prune -f --filter "until=24h"
+          docker container prune -f --filter "until=24h"
