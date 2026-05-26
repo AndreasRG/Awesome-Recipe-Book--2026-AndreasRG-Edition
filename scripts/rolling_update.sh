@@ -20,8 +20,8 @@ attempt_update() {
   docker compose -f docker-compose.app.yml up -d --force-recreate --no-deps $SERVICE
 
   # Initial grace period - let the app start before checking health
-  echo "[$(date +'%H:%M:%S')] Waiting 10s for container startup..."
-  sleep 10
+  # echo "[$(date +'%H:%M:%S')] Waiting 10s for container startup..."
+  # sleep 10
 
   # Wait for healthcheck to pass
   TIMEOUT=0
