@@ -1,97 +1,60 @@
-# Understanding the Routers Layer
+# Router Layer Documentation
 
-## Overview:
-Routers define the public interface of the application. They receive HTTP requests, validate input using Pydantic schemas, call service functions, and return responses. Routers do not contain business logic or database operations. Instead, they act as the “API layer” or “presentation layer” of the backend.
+## Purpose
+The router layer exposes the public HTTP interface for the application. It is the transport boundary between clients and the application domain.
 
-### Router Groups:
+## Responsibilities
+Routers are responsible for:
 
-1 - Pages Router
+- Accepting HTTP requests
+- Validating request payloads with Pydantic schemas
+- Binding dependencies such as database sessions and authenticated user context
+- Delegating business operations to the services layer
+- Returning JSON responses or rendering HTML templates
 
-- Handles HTML endpoints.
+Routers should remain lightweight and declarative. They do not implement business rules or perform direct persistence operations.
 
-- Renders templates such as home.html and recipe_detail.html.
+## Router Modules
 
-- Calls recipe services to fetch data for the UI.
+### `pages.py`
+- Handles HTML page rendering for the public website
+- Exposes routes such as home, recipe detail, and recipe creation
+- Injects authenticated user state into templates
+- Uses services to retrieve recipe content and user context
 
-- Does not return JSON.
+### `recipes.py`
+- Exposes REST API endpoints for recipe data
+- Supports list, retrieve, and create operations
+- Uses Pydantic request models to validate payloads
+- Enforces authentication for recipe creation
 
-2 - Recipes Router
+### `users.py`
+- Manages authentication and session routes
+- Supports login, signup, logout, and token creation
+- Delegates user persistence and credential validation to services
 
-- Handles REST API endpoints for recipes.
+## Request Flow
 
-- Supports listing recipes, retrieving a single recipe, and creating new recipes.
+1. Client sends an HTTP request.
+2. FastAPI routes the request to the appropriate router.
+3. The router validates input and resolves dependencies.
+4. The router calls a service function.
+5. The service returns the result.
+6. The router returns a response or renders a template.
 
-- Uses Pydantic schemas for validation.
+## Why this separation matters
 
-- Calls recipe service functions for all database operations.
+This architecture separates transport concerns from domain logic, which enables:
 
-3 - Users Router
+- easier testing of business logic in services
+- clear HTTP contract management in routers
+- reduced coupling between routing and persistence
+- better scalability and maintainability for the codebase
 
-- Handles user-related API endpoints.
+## What routers should not contain
 
-- Supports user creation, user profile endpoints, and token creation.
-
-- Delegates all database operations to the user service.
-
-### How endpoints work inside routers:
-
-Routers define the actual HTTP endpoints of the application. Each endpoint corresponds to a specific HTTP method and path. All endpoints use the base URL "http://localhost:8000". For example:
-
-- GET /api/recipe/recipes/
-
-- GET /api/recipe/recipes/{id}/
-
-- POST /api/recipe/recipes/
-
-- GET / (home page)
-
-- GET /recipes/{id}/ (HTML detail page)
-
-When a request reaches a router, the router performs three tasks:
-
-- It validates incoming data using Pydantic schemas (for POST/PUT/PATCH requests).
-
-- It calls the appropriate service function to perform the actual logic.
-
-- It returns the result as JSON or renders an HTML template.
-
-Routers do not contain business logic. They do not talk directly to the database. They only coordinate the flow between the client and the services layer.
-
-Example flow for GET /api/recipe/recipes/:
-
-- Router receives the request.
-
-- Router calls list_recipes(db).
-
-- Service fetches recipes from the database.
-
-- Router returns the list as JSON.
-
-Example flow for GET /recipes/5/ (HTML):
-
-- Router receives the request.
-
-- Router calls get_recipe(db, 5).
-
-- Service fetches the recipe.
-
-- Router renders recipe_detail.html with the recipe data.
-
-This structure keeps routers lightweight and easy to understand.
-
-### What routers should NOT contain:
-
-- SQLAlchemy queries
-
-- ORM session logic
-
-- Business rules
-
-- Data transformations
-
-- Template definitions
-
-- Application setup logic
-
-### Why this structure matters:
-Routers remain clean and readable because they only coordinate requests and responses. All heavy lifting is done by the services layer. This separation makes the project easier to maintain, test, and extend.
+- SQLAlchemy ORM queries
+- Direct session management
+- Domain rule enforcement
+- Template structure or layout logic
+- Application startup or configuration code

@@ -1,101 +1,105 @@
-# Awesome Recipe Book - 2026 AndreasRG Edition
-### This project is designed for educational purposes only. All rights remain with the original provider -> MIT (License included in repository)
+# Awesome Recipe Book — 2026 AndreasRG Edition
 
-This is the "Awesome recipe cookbook - 2026 AndreasRG Edition" repository. It is an upgraded version of its parent repository. The objective is to recreate and improve the "Awsome Recipe Book" web application using modern coding and better practices: "https://github.com/cookbookio/awsome_recipe_cookbook".
+## Overview
+Awesome Recipe Book is a modern, multi-layered web application that demonstrates a production-ready architecture for a recipe management service. This edition is refactored from the original Cookbook project to use:
 
-Key upgrades include:
+- **FastAPI** for high-performance request handling
+- **Async SQLAlchemy** for non-blocking database access
+- **Jinja2** for server-side HTML rendering
+- **Docker** for containerized deployment
+- **GitHub Actions** for CI/CD automation
 
-- SQLite3 → SQLAlchemy (async ORM)
+The repository is designed to support a 2-VM deployment model with separate application and proxy layers, including a blue-green reverse-proxy strategy for zero-downtime updates.
 
-- Flask → FastAPI
+## Architecture Summary
 
-- Updated architecture and cleaner project structure
+### Logical separation
+- **App VM**: Hosts the FastAPI application, database, and application-level services
+- **Proxy VM**: Hosts the reverse proxy, monitoring stack, and external ingress
 
-- More maintainable and scalable codebase
+### Deployment pattern
+- **App layer**: 3 application instances behind an internal reverse proxy
+- **Proxy layer**: Blue/Green reverse-proxy deployment on HTTP port 80
+- **Database VM**: Dedicated database host reachable via the `DATABASE_URL` defined in `app/database.py`
+- **Monitoring**: Prometheus and Grafana are colocated on the proxy VM for centralized observability
 
-- Safer SQL methods
+### Key capabilities
+- Zero-downtime proxy deployments via blue-green switching
+- Health-checked application rollout
+- Authentication-aware front-end flow for login and recipe creation
+- Dedicated database VM accessible by application instances
+- Modular separation of routers, services, and database models
 
-#### For the development tree, go to the project's Kanban board: "https://github.com/users/AndreasRG/projects/1/views/1"
-<br>
+## Repository Structure
 
----
-### ⚠️  SECURITY VULNERABILITIES - SECURE AUTHENTICATION LOGIC IS MISSING AT THE MOMENT, seed_database() ALSO DANGER, USE AT OWN RISK ⚠️
----
-<br>
+- `app/`: FastAPI application source code
+  - `app.py`: application bootstrap and router registration
+  - `database.py`: async SQLAlchemy engine, session factory, and initialization
+  - `models.py`: ORM model definitions
+  - `routers/`: HTTP route definitions for pages, recipes, and users
+  - `services/`: business logic and persistence operations
+  - `templates/`: Jinja2 HTML views
+  - `static/`: front-end assets
 
-## How to install and launch via bash:
+- `reverse-proxy/`: Nginx proxy configuration
+- `monitoring/`: Prometheus monitoring definitions
+- `scripts/`: deployment and orchestration helpers
+- `.github/workflows/`: CI/CD workflows
 
-Clone the repository to your machine in terminal by "git clone https://github.com/AndreasRG/Awesome-Recipe-Book--2026-AndreasRG-Edition.git". 
+## Deployment Overview
 
-Make sure to have Python 3.12.x installed by either option (note: requires admin rights):
-- Windows via Chocolatey: "choco install python --version=3.12"
-- macOS via Homebrew: "brew install python@3.12" then "brew link python@3.12"
-- Linux (Ubuntu): "sudo apt update" then "sudo apt install python3.12 python3.12-venv python3.12-dev"
+### App VM
+- `docker-compose.app.yml` orchestrates the application containers and node exporter
+- `scripts/rolling_update.sh` performs rolling updates with health checks
+- Application containers expose internal port `5000`
 
-Install .venv environment using terminal by "python -m venv .venv".
+### Proxy VM
+- `docker-compose.proxy-blue.yml` and `docker-compose.proxy-green.yml` support blue-green deployment
+- `scripts/blue_green_proxy_deploy.sh` handles proxy activation and switch-over
+- External ingress is served on **HTTP port 80 only**
 
-- Windows PowerShell:
-  - Activate .venv environment in terminal by ".venv\Scripts\Activate.ps1".
+### GitHub Actions
+- Build and publish Docker images to GHCR
+- Deploy application VM via SSH and rolling update script
+- Deploy proxy VM via SSH and blue-green proxy script
 
-- Windows CMD:
-  - Activate .venv environment in terminal by ".venv\Scripts\Activate.bat".
+## Running Locally
 
-- macOS/Linux:
-  - Activate .venv environment in terminal by "source .venv/bin/activate".
+### Python development
 
-Install dependencies using terminal with requirements.txt by "pip install -r requirements.txt".
+```bash
+git clone https://github.com/AndreasRG/Awesome-Recipe-Book--2026-AndreasRG-Edition.git
+cd Awesome-Recipe-Book--2026-AndreasRG-Edition
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\Activate.ps1 on Windows
+pip install -r requirements.txt
+uvicorn app.app:app --reload --host 0.0.0.0 --port 8000
+```
 
-Launch the application in terminal by "uvicorn app.app:app --reload".
+Open `http://localhost:8000` in your browser.
 
-The application will now start on "http://localhost:8000".
+### Docker
 
-To stop the application do "ctrl + c" in the running terminal.
+```bash
+docker build -t awesome-recipe-book .
+docker run --rm -p 5000:5000 awesome-recipe-book
+```
 
-<br>
+Open `http://localhost:5000` in your browser.
 
-## How to install and launch via Docker:
+## Notes
 
-Clone the repository to your machine. 
+- The application is intended as a learning and architectural demonstration.
+- Authentication is implemented via cookie-based sessions and guards recipe creation.
+- Proxy deployment is configured for HTTP only on port 80.
+- The database uses SQLite with SQLAlchemy for a simplified local development experience.
 
-Install and launch the application in terminal using Docker by "docker build -t recipe-app .".
+## Further Reading
 
-Launch the application in terminal by "docker run -p 5000:5000 recipe-app".
+- `app/README_app.md`: application architecture and bootstrap details
+- `app/routers/README_routers.md`: router layer responsibilities
+- `app/services/README_services.md`: services layer responsibilities
 
-The application will now start on "http://localhost:5000".
+## License
 
-To stop the application type "docker-compose down" in the running terminal or kill directly from Docker container.
-
-<br>
-
----
-### ⚠️  FOR USAGE INSTRUCTION, GO TO RESPECTIVE README FOR APP, ROUTERS AND SERVICES  ⚠️
----
-
-<br><br><br>
-
-## Source Documentation list:
-
-### Core Libraries:
-Python 3.12: https://docs.python.org/3.12/  
-FastAPI: https://fastapi.tiangolo.com/  
-SQLAlchemy: https://docs.sqlalchemy.org/en/20/  
-Uvicorn: https://www.uvicorn.org/  
-Jinja2 Templates: https://jinja.palletsprojects.com/
-
-### Async & Web Stack:  
-AnyIO: https://anyio.readthedocs.io/  
-WebSockets: https://websockets.readthedocs.io/  
-httptools: https://github.com/MagicStack/httptools
-
-### Pydantic & Typing:  
-Pydantic v2: https://docs.pydantic.dev/  
-typing_extensions: https://pypi.org/project/typing-extensions/
-
-### Database & Drivers:  
-aiosqlite: https://github.com/omnilib/aiosqlite  
-greenlet: https://greenlet.readthedocs.io/
-
-### Development Tools:  
-watchfiles: https://github.com/samuelcolvin/watchfiles  
-python-dotenv: https://github.com/theskumar/python-dotenv  
-PyYAML: https://pyyaml.org/
+This project is published under the **MIT License**.

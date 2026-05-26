@@ -30,6 +30,7 @@ api = APIRouter(prefix="/api/user", tags=["users"])
 async def user_create_route(
     data: UserCreate, db: AsyncSession = Depends(get_db_session)
 ):
+    """Create a new user from JSON payload."""
     try:
         user = await create_user(db, data)
         USER_SIGNUPS_TOTAL.inc()
@@ -80,6 +81,7 @@ pages = APIRouter(prefix="/auth")
 
 @pages.get("/login")
 async def login_page(request: Request):
+    """Render the login page for browser users."""
     return templates.TemplateResponse("login.html", {"request": request})
 
 

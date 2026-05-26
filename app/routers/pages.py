@@ -21,6 +21,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/", dependencies=[Depends(inject_user)])
 async def home(request: Request, db: AsyncSession = Depends(get_db_session)):
+    """Render the home page with a list of recipes and optional user info."""
     recipes = await list_recipes(db)
 
     recipe_list = [
@@ -49,6 +50,7 @@ async def home(request: Request, db: AsyncSession = Depends(get_db_session)):
 async def recipe_detail(
     id: int, request: Request, db: AsyncSession = Depends(get_db_session)
 ):
+    """Render the recipe detail page for the requested recipe id."""
     recipe = await get_recipe(db, id)
 
     if not recipe:

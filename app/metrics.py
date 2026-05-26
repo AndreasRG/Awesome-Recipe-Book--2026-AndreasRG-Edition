@@ -1,4 +1,5 @@
 # metrics.py
+# Application-level Prometheus counters for observability.
 from prometheus_client import Counter
 
 RECIPES_CREATED_TOTAL = Counter("recipes_created_total", "Number of recipes created")

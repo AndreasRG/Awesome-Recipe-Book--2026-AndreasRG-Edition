@@ -1,95 +1,66 @@
-# Understanding the Services Layer
+# Services Layer Documentation
 
-## Overview:
-The services layer contains all business logic and database operations. Services interact directly with SQLAlchemy models and the async database session. Routers call services, but services never import routers. This creates a clean separation between the API layer and the business logic layer.
+## Purpose
+The services layer encapsulates business rules, persistence operations, and transactional workflow for the application. It is the domain logic core of Awesome Recipe Book.
 
-### Service Groups:
+## Responsibilities
+Services are responsible for:
 
-1 - Recipe Services
+- Interacting with SQLAlchemy models and async database sessions
+- Orchestrating create/read/update/delete operations
+- Applying business rules for recipes and users
+- Managing transactions, commits, and object refresh cycles
+- Returning domain objects to the router layer
 
-- Fetch all recipes with tags and ingredients.
+Services should never depend on HTTP concepts, request objects, or template rendering.
 
-- Fetch a single recipe by ID.
+## Service Groups
 
-- Create new recipes and attach tags and ingredients.
+### Recipe Services
+- `list_recipes`: retrieve recipe listings with tags and ingredient metadata
+- `get_recipe`: fetch a single recipe by ID with related entities
+- `create_recipe`: persist a new recipe and associate tags/ingredients
+- Ensures that recipe creation is consistent and that relationships are configured correctly
 
-- Handle ORM operations such as commit, refresh, and relationship loading.
+### User Services
+- `create_user`: persist a new user record
+- `authenticate_user`: validate credentials against stored user data
+- `login_user`: orchestrate authentication workflow
+- `register_user_from_form`: convert user input into domain payloads
 
-2 - User Services
+## Interaction Pattern
 
-- Create new users.
+The router layer delegates application workflows to services. A typical interaction looks like:
 
-- Authenticate users by email and password.
+1. Router validates request data with Pydantic.
+2. Router calls a service function with the database session.
+3. Service executes ORM operations and business rules.
+4. Service returns domain entities or error state.
+5. Router serializes the result to JSON or templates.
 
-- Handle all user-related database queries.
+## Why this separation matters
 
-### How endpoints interact with the services layer:
+Centralizing business logic in services enables:
 
-Services contain the logic that endpoints depend on. When a router receives a request, it never performs database operations directly. Instead, it calls a service function. This ensures that all business logic is centralized and reusable.
+- better unit testing for domain rules
+- reuse of logic across multiple route handlers or future interfaces
+- easier migration to alternative persistence backends
+- cleaner code organization and lower coupling
 
-*NOTE: All endpoints use the base URL "http://localhost:8000".*
+## What services should not include
 
-Example: GET /api/recipe/recipes/
+- FastAPI routing decorators
+- HTTP request or response objects
+- Template rendering logic
+- Direct access to request/session middleware
+- Application startup configuration
 
-- Router calls list_recipes(db)
+## Architectural rationale
 
-- Service executes a SQLAlchemy query
+This design adheres to standard layered architecture principles:
 
-- Service returns ORM objects
+- **Presentation**: routers manage HTTP and templates
+- **Application / Domain**: services execute business behavior
+- **Persistence**: models and database sessions support data access
 
-- Router returns them as JSON
-
-Example: POST /api/recipe/recipes/
-
-- Router validates the incoming RecipeCreate schema
-
-- Router calls create_recipe(db, data)
-
-- Service creates the Recipe ORM object
-
-- Service attaches tags and ingredients
-
-- Service commits the transaction
-
-- Router returns the new recipe ID
-
-Example: user authentication
-
-- Router receives email and password
-
-- Router calls authenticate_user(db, email, password)
-
-- Service checks the database
-
-- Service returns the user or None
-
-- Router returns a token or an error
-
-This separation ensures that:
-
-- Routers handle HTTP
-
-- Services handle logic
-
-- Models handle data
-
-- app.py handles application setup
-
-This makes the project maintainable, testable, and scalable.
-
-### What services should NOT contain:
-
-- FastAPI imports
-
-- HTTPException
-
-- Request or Response objects
-
-- Template rendering
-
-- Routing logic
-
-- Application setup code
-
-### Why this structure matters:
-By isolating business logic in services, the project becomes modular and testable. Services can be reused across routers, background tasks, or even future CLI tools. This architecture also prevents duplication and keeps routers lightweight.
+By keeping these layers distinct, the project remains maintainable and scalable as new functionality is added.

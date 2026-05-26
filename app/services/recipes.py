@@ -12,15 +12,18 @@ from app.models import Ingredient, Recipe, Tag
 # Recipe Service Logic
 # ---------------------------------------------------------
 
+# Predefine eager-loading strategy to avoid N+1 query problems when loading recipe relationships.
 RECIPE_LOAD = [selectinload(Recipe.tags), selectinload(Recipe.ingredients)]
 
 
 async def list_recipes(db: AsyncSession):
+    """Return all recipes with related tags and ingredients pre-loaded."""
     result = await db.execute(select(Recipe).options(*RECIPE_LOAD))
     return result.scalars().unique().all()
 
 
 async def get_recipe(db: AsyncSession, recipe_id: int):
+    """Return a single recipe by id, with its tags and ingredients loaded."""
     result = await db.execute(
         select(Recipe).where(Recipe.id == recipe_id).options(*RECIPE_LOAD)
     )
@@ -33,9 +36,7 @@ async def create_recipe(
     user_id: int | None = None,
     image=None,
 ):
-    """
-    Create a new recipe. Requires authentication.
-    """
+    """Persist a new recipe and attach tags/ingredients from the request payload."""
 
     if user_id is None:
         raise PermissionError("User must be logged in to create a recipe")

@@ -1,5 +1,9 @@
 def require_login(request):
-    """Check if user is logged in. Return None if logged in, else True if not."""
+    """Return None when authenticated, True when not.
+
+    This helper is used for simple page gating where a truthy value
+    indicates the user should be redirected or shown a login prompt.
+    """
     user_id = request.cookies.get("user_id")
     if not user_id:
         # User is NOT logged in

@@ -14,7 +14,7 @@ from app.schemas import UserCreate
 
 
 async def create_user(db: AsyncSession, data):
-    """Create a new user."""
+    """Create a new user record. Note: passwords are stored in plaintext for this prototype."""
     new_user = User(email=data.email, password=data.password, name=data.name)
 
     db.add(new_user)
@@ -24,7 +24,7 @@ async def create_user(db: AsyncSession, data):
 
 
 async def authenticate_user(db: AsyncSession, email: str, password: str):
-    """Return user if email/password match, else None."""
+    """Validate credentials and return the user if authentication succeeds."""
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
 

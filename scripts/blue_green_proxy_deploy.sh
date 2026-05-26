@@ -84,16 +84,17 @@ wait_for_health() {
     return 1
 }
 
-# Test if service is responding on external ports
+# Test if service is responding on external HTTP port 80
+# This check validates that the active proxy container has successfully bound the public ingress port.
 test_external_ports() {
-    log_info "Testing external port bindings (80/443)..."
+    log_info "Testing external port binding (80)..."
 
     local max_attempts=10
     local attempt=0
 
     while [ $attempt -lt $max_attempts ]; do
         if curl -f http://localhost/health >/dev/null 2>&1; then
-            log_info "External ports (80/443) are responding correctly!"
+            log_info "External port 80 is responding correctly!"
             return 0
         fi
 
@@ -103,7 +104,7 @@ test_external_ports() {
     done
 
     echo ""
-    log_warn "External ports not responding yet (may still be binding)"
+    log_warn "External port 80 not responding yet (may still be binding)"
     return 0  # Don't fail - ports may need a moment to bind
 }
 
@@ -169,7 +170,7 @@ deploy_blue_green() {
     if [ "$inactive" = "green" ]; then
         # Create temporary compose file with port bindings
         cp "$GREEN_COMPOSE" "$GREEN_COMPOSE_TEMP"
-        sed -i 's/# No port bindings initially - ports will be added when this becomes active/ports:\n      - "80:80"\n      - "443:443"/' "$GREEN_COMPOSE_TEMP"
+        sed -i 's/# No port bindings initially - ports will be added when this becomes active/ports:\n      - "80:80"/' "$GREEN_COMPOSE_TEMP"
 
         # If sed didn't work (macOS BSD sed), recreate manually
         if ! grep -q "80:80" "$GREEN_COMPOSE_TEMP"; then
@@ -183,7 +184,6 @@ services:
     container_name: reverse-proxy-green
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ./reverse-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:
@@ -258,10 +258,10 @@ COMPOSE_EOF
         $DC -f "$BLUE_COMPOSE" up -d
     fi
 
-    # Step 4: Verify external connectivity
-    log_info "Step 4: Verifying external port connectivity..."
+    # Step 4: Verify external connectivity on HTTP port 80
+    log_info "Step 4: Verifying external port 80 connectivity..."
     if ! test_external_ports; then
-        log_warn "External ports slow to respond, but continuing..."
+        log_warn "External port 80 is slow to respond, but continuing..."
     fi
 
     # Step 5: Update state file

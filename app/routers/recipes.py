@@ -43,6 +43,7 @@ async def recipe_list_route(db: AsyncSession = Depends(get_db_session)):
 
 @api.get("/{id}/")
 async def recipe_detail_route(id: int, db: AsyncSession = Depends(get_db_session)):
+    """Return recipe details as JSON."""
     recipe = await get_recipe(db, id)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
@@ -80,6 +81,7 @@ async def recipes_page(request: Request, db: AsyncSession = Depends(get_db_sessi
 
 @pages.get("/new")
 async def new_recipe_page(request: Request):
+    """Render the new recipe form, unless the user is not authenticated."""
     auth = require_login(request)
     if auth:
         # Return a tiny HTML page that triggers a browser alert + redirect
@@ -124,6 +126,7 @@ async def new_recipe_submit(
             image=image,
         )
     except PermissionError:
+        # PermissionError is used as a guard when the user is unauthenticated.
         return HTMLResponse(
             """
             <script>
