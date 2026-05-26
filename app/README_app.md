@@ -1,55 +1,68 @@
-# Understanding app.py
+# Application Layer Overview
 
-## Overview:
-The app.py file is the central entry point of the application. It creates the FastAPI instance, loads configuration, mounts static files, initializes templates, includes all routers, and runs database initialization on startup. This file does not contain business logic or routing logic. Instead, it acts as the “application assembler,” wiring together the different parts of the project.
+## Purpose
+The `app/` module contains the application service and runtime assembly for Awesome Recipe Book. It is responsible for configuring FastAPI, preparing template rendering, wiring routers, and establishing database initialization before accepting requests.
 
-### Key Responsibilities:
+## Core Responsibilities
 
-- Create the FastAPI application instance.
+- Instantiate the FastAPI application.
+- Mount static assets under `/static`.
+- Set up Jinja2 template rendering for server-side HTML pages.
+- Register router modules for pages, recipes, and user functionality.
+- Initialize the database schema and seed data on startup.
+- Expose the entrypoint for production execution using Uvicorn.
 
-- Mount the /static directory so CSS, JS, and images can be served.
+## Architecture
 
-- Initialize Jinja2 templates for HTML rendering.
+The application layer is intentionally thin and compositional:
 
-- Include all routers (pages, recipes, users).
+- `app.app` acts as the application bootstrap and dependency wiring point.
+- `app.routers` contains route definitions and HTTP endpoint handling.
+- `app.services` contains business logic, persistence orchestration, and database transactions.
+- `app.models` defines the domain model and relational mapping.
+- `app.database` provides the async engine, session factory, and migration-ready initialization logic.
 
-- Run database initialization when the server starts.
+This layering follows standard enterprise architecture principles:
+- **Presentation layer**: Request handling and template rendering
+- **Application layer**: Service orchestration and router coordination
+- **Persistence layer**: Database sessions, SQLAlchemy models, and transactional behavior
 
-- Provide a simple API overview endpoint.
+## Runtime Behavior
 
-- Start the application when executed with “python app.py”.
+On process startup, the application performs the following sequence:
 
-### How endpoints work in the application:
+1. Create FastAPI instance.
+2. Mount the `/static` folder.
+3. Initialize Jinja2 templates.
+4. Include routers from `app.routers`.
+5. Run database initialization and seeding.
+6. Start the server with `uvicorn app.app:app`.
 
-The app.py file does not define any endpoints itself (except the optional /api overview). Instead, it loads all endpoints from the routers. When the application starts, app.py includes the routers, and FastAPI automatically registers every route defined inside them. This means app.py acts as the central hub that exposes all API and HTML endpoints to the outside world.
+## Production Deployment
 
-When a request comes in, FastAPI checks which router the path belongs to. All endpoints use the base URL "http://localhost:5000". For example:
+The root `Dockerfile` packages `app/` into a container image with:
+- Python 3.12
+- Dependencies installed from `app/requirements.txt`
+- `PYTHONPATH=/app`
+- Command: `uvicorn app.app:app --host 0.0.0.0 --port 5000`
 
-- A request to “/api/recipe/recipes/” is routed to the recipes router.
+## Database VM
 
-- A request to “/api/user/create/” is routed to the users router.
+The application connects to a dedicated database VM via the `DATABASE_URL` environment variable in `app/database.py`.
+The default connection string is:
 
-- A request to “/recipes/5/” is routed to the pages router for HTML rendering.
+`postgresql+asyncpg://recipe_user:admin123@27.0.0.6:5432/recipe_db`
 
-app.py itself does not process the request. It simply ensures that all routers are active and that the database is initialized before any endpoint is used.
+This means the app can be configured to use an external database host while keeping the database connection logic centralized in `app/database.py`.
 
-This separation keeps app.py clean and ensures that all endpoint logic lives in the routers and services.
+## Why this organization matters
 
-### What app.py should NOT contain:
+Keeping `app.app` focused on application assembly ensures:
+- Clean separation of concerns
+- Easier onboarding for developers
+- Better testability for business logic
+- Reduced coupling between HTTP routing and persistence logic
 
-- Database models
-
-- Business logic
-
-- ORM queries
-
-- HTML templates
-
-- API route definitions
-
-- Authentication logic
-
-- Service functions
-
-### Why this structure matters:
-Keeping app.py small and focused ensures the project remains modular, readable, and scalable. All real functionality is delegated to routers and services, while app.py simply ties everything together.
+For detailed component responsibilities, see:
+- `app/routers/README_routers.md`
+- `app/services/README_services.md`

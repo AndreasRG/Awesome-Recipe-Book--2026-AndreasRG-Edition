@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db_session
 from app.models import User
 
+# Use OAuth2 password bearer only for optional token extraction.
+# auto_error=False allows requests to proceed if no bearer token is present.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/token/", auto_error=False)
 
 
@@ -17,11 +19,13 @@ async def get_current_user(
     """Get current user from cookie or token. Raises HTTPException if not found."""
     user_id = None
 
-    # Try to get user_id from cookie first
+    # Try to get authenticated user from cookie first.
+    # This is the primary session mechanism for browser-based login.
     if request:
         user_id = request.cookies.get("user_id")
 
-    # If no cookie, try token
+    # If no cookie exists, fall back to token-based auth.
+    # In this app token is currently treated as a user identifier placeholder.
     if not user_id and token:
         user_id = token
 

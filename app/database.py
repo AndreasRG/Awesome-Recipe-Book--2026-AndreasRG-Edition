@@ -11,7 +11,8 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 logger = logging.getLogger(__name__)
 
-# Use DATABASE_URL from environment (recommended)
+# Resolve the database connection string from environment first.
+# In deployment, a dedicated database VM is expected to provide this URL.
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql+asyncpg://recipe_user:admin123@27.0.0.6:5432/recipe_db"
 )
@@ -37,7 +38,12 @@ Base = declarative_base()
 
 
 async def get_db_session():
-    """Provide a database session to FastAPI routes."""
+    """Provide a database session to FastAPI routes.
+
+    This function is used as a dependency in FastAPI routes so that each
+    request gets its own async session. The session is closed and rolled back
+    automatically if an exception occurs.
+    """
     async with AsyncSessionLocal() as session:
         try:
             yield session
