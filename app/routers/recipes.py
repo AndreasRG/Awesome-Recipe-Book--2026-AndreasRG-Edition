@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.app import templates
 from app.auth import require_login
 from app.database import get_db_session
-from app.main import templates
 from app.metrics import RECIPE_VIEWS_TOTAL, RECIPES_CREATED_TOTAL
 from app.schemas import RecipeCreate
 from app.services.recipes import (

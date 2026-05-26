@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.app import templates
 from app.database import get_db_session
-from app.main import templates
 from app.metrics import LOGIN_ATTEMPTS_TOTAL, USER_SIGNUPS_TOTAL
 from app.schemas import TokenCreate, UserCreate, UserUpdate
 from app.services.users import (
